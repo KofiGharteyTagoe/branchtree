@@ -65,7 +65,7 @@ export async function cloneOrFetch(appId: string, repoUrl: string, pat: string):
  * in the PAT and break authentication.
  */
 function buildAuthUrl(repoUrl: string, pat: string): string {
-  return repoUrl.replace('https://', `https://MxToken:${pat}@`);
+  return repoUrl.replace('https://', `https://pat:${pat}@`);
 }
 
 /**

@@ -1,8 +1,9 @@
 import simpleGit from 'simple-git';
 import type { ParsedCommit } from '../types/git.types.js';
 
-// Use null byte as delimiter to avoid conflicts with commit messages
-const DELIMITER = '\x00';
+// Use unit separator as delimiter to avoid conflicts with commit messages
+// Note: \x00 (null byte) is rejected by Node.js in process arguments
+const DELIMITER = '\x1f';
 const FORMAT = ['%H', '%P', '%an', '%ae', '%aI', '%s', '%D'].join(DELIMITER);
 
 /**

@@ -1,5 +1,6 @@
 import AppSelector from '../app/AppSelector';
 import SyncButton from '../app/SyncButton';
+import DeleteAppButton from '../app/DeleteAppButton';
 
 interface HeaderProps {
   selectedAppId: string | null;
@@ -18,6 +19,12 @@ export default function Header({ selectedAppId, onAppChange }: HeaderProps) {
       </div>
       <div className="flex items-center gap-3">
         {selectedAppId && <SyncButton appId={selectedAppId} />}
+        {selectedAppId && (
+          <DeleteAppButton
+            appId={selectedAppId}
+            onDeleted={() => onAppChange(null)}
+          />
+        )}
       </div>
     </header>
   );
