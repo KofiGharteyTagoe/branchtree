@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+
+# Environment files with secrets
+.env
+*.env.local
+
+# Database files
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+
+# Git bare clone data
+backend/data/repos/
+
+# Build outputs
+backend/dist/
+frontend/dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Coverage
+coverage/
