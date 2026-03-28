@@ -1,5 +1,6 @@
 import simpleGit from 'simple-git';
 import type { ParsedCommit } from '../types/git.types.js';
+import { logger } from '../utils/logger.js';
 
 // Use unit separator as delimiter to avoid conflicts with commit messages
 // Note: \x00 (null byte) is rejected by Node.js in process arguments
@@ -27,7 +28,7 @@ export async function parseGitLog(repoPath: string): Promise<ParsedCommit[]> {
 
     const parts = line.split(DELIMITER);
     if (parts.length < 6) {
-      console.warn(`Skipping malformed git log line: ${line.substring(0, 80)}...`);
+      logger.warn(`Skipping malformed git log line: ${line.substring(0, 80)}...`);
       continue;
     }
 

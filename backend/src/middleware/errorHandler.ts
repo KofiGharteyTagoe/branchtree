@@ -12,16 +12,13 @@ export function errorHandler(
   _next: NextFunction,
 ): void {
   const statusCode = err.statusCode || 500;
-  const message = err.message || 'Internal Server Error';
 
-  logger.error({ err, statusCode }, `${statusCode} - ${message}`);
-  if (statusCode === 500) {
-    logger.error(err.stack);
-  }
+  // Log full error internally (pino serializes err safely)
+  logger.error({ err, statusCode }, `${statusCode} error`);
 
+  // Never expose internal details to the client
   res.status(statusCode).json({
-    error: statusCode >= 500 ? 'Internal Server Error' : message,
-    message,
+    error: statusCode >= 500 ? 'Internal Server Error' : err.message,
     statusCode,
   });
 }

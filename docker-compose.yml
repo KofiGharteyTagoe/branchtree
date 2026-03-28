@@ -11,6 +11,8 @@ services:
       - DATA_DIR=/app/data
       - DB_PATH=/app/data/branchtree.sqlite
       - LOG_LEVEL=info
+      # REQUIRED: Generate with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+      - SETTINGS_ENCRYPTION_KEY=${SETTINGS_ENCRYPTION_KEY:?Set SETTINGS_ENCRYPTION_KEY in .env or environment}
     restart: unless-stopped
 
 volumes:

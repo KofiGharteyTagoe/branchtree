@@ -19,6 +19,9 @@ async function main() {
   // Initialize default settings (auto-generates crypto secrets on first run)
   const setupToken = settings.initializeDefaults();
 
+  // Migrate any legacy plaintext secrets to encrypted format
+  settings.migrateUnencryptedSecrets();
+
   if (setupToken) {
     // Write setup token to a file instead of logging it
     const tokenFilePath = path.join(config.dataDir, '.setup-token');

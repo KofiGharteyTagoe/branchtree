@@ -11,6 +11,12 @@ import { apiRouter } from './routes/index.js';
 
 export const app = express();
 
+// Disable ETag to prevent response fingerprinting in logs/caches
+app.set('etag', false);
+
+// Remove X-Powered-By (helmet does this too, but belt & braces)
+app.disable('x-powered-by');
+
 // Security headers
 app.use(helmet({ contentSecurityPolicy: false }));
 

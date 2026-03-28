@@ -35,6 +35,8 @@ ENV NODE_ENV=production
 ENV PORT=3001
 ENV DATA_DIR=/app/data
 ENV DB_PATH=/app/data/branchtree.sqlite
+# SETTINGS_ENCRYPTION_KEY must be provided at runtime for portable secret encryption
+# Generate with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 EXPOSE 3001
 
