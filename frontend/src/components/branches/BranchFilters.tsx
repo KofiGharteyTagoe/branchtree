@@ -22,6 +22,8 @@ export default function BranchFilters({
       <div className="relative flex-1 min-w-[200px] max-w-sm">
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <input
+          id="branch-search"
+          name="branch-search"
           type="text"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
@@ -33,6 +35,8 @@ export default function BranchFilters({
       <div className="flex items-center gap-2">
         <Filter className="w-4 h-4 text-gray-400" />
         <select
+          id="branch-type-filter"
+          name="branch-type-filter"
           value={typeFilter}
           onChange={(e) => onTypeChange(e.target.value)}
           className="appearance-none bg-surface-50 text-sm text-gray-600 font-medium rounded-xl px-4 py-2.5 border border-surface-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-400 transition-all duration-200 cursor-pointer"
@@ -47,6 +51,8 @@ export default function BranchFilters({
         </select>
 
         <select
+          id="branch-status-filter"
+          name="branch-status-filter"
           value={statusFilter}
           onChange={(e) => onStatusChange(e.target.value)}
           className="appearance-none bg-surface-50 text-sm text-gray-600 font-medium rounded-xl px-4 py-2.5 border border-surface-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-400 transition-all duration-200 cursor-pointer"

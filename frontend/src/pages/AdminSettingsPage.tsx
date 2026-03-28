@@ -294,7 +294,7 @@ function SettingsTab() {
     return (
       <div key={key} className="flex flex-col gap-1">
         <div className="flex items-center justify-between">
-          <label className="text-sm font-medium text-surface-700">
+          <label htmlFor={`setting-${key}`} className="text-sm font-medium text-surface-700">
             {key}
             {isSecret && <span className="ml-2 text-xs text-amber-600 font-normal">(secret)</span>}
           </label>
@@ -310,6 +310,8 @@ function SettingsTab() {
         </div>
         <p className="text-xs text-surface-400 mb-1">{SETTING_DESCRIPTIONS[key] || ''}</p>
         <input
+          id={`setting-${key}`}
+          name={`setting-${key}`}
           type={isSecret && !isRevealed ? 'password' : 'text'}
           value={editValues[key] || ''}
           onChange={(e) => handleValueChange(key, e.target.value)}
