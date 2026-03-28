@@ -1,8 +1,25 @@
 services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"   # HTTP/3
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    environment:
+      - DOMAIN=${DOMAIN:-localhost}
+    depends_on:
+      branchtree:
+        condition: service_healthy
+
   branchtree:
     build: .
-    ports:
-      - "3001:3001"
+    expose:
+      - "3001"
     volumes:
       - branchtree-data:/app/data
     environment:
@@ -17,3 +34,5 @@ services:
 
 volumes:
   branchtree-data:
+  caddy-data:
+  caddy-config:

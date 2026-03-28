@@ -3,11 +3,15 @@ import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { corsOptions } from './config/cors.js';
 import { requestId } from './middleware/requestId.js';
 import { requestLogger } from './middleware/requestLogger.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { apiRouter } from './routes/index.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export const app = express();
 
@@ -81,6 +85,17 @@ app.use('/api/apps/:appId/sync', syncLimiter);
 
 // Routes
 app.use('/api', apiRouter);
+
+// Serve frontend static files in production
+if (process.env.NODE_ENV === 'production') {
+  const publicDir = path.resolve(__dirname, '..', 'public');
+  app.use(express.static(publicDir));
+
+  // SPA fallback — serve index.html for all non-API routes
+  app.get('*', (_req, res) => {
+    res.sendFile(path.join(publicDir, 'index.html'));
+  });
+}
 
 // Error handling (must be last)
 app.use(errorHandler);
