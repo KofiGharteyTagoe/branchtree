@@ -2,7 +2,9 @@ import { Router } from 'express';
 import * as appModel from '../models/app.model.js';
 import { createApiError } from '../middleware/errorHandler.js';
 import { validateAppId } from '../middleware/validateParams.js';
+import { getProvider, isValidProviderType } from '../providers/index.js';
 import type { ApiApp } from '../types/api.types.js';
+import type { ProviderType } from '../types/provider.types.js';
 
 export const appsRouter = Router();
 
@@ -14,6 +16,7 @@ appsRouter.get('/apps', (_req, res) => {
     appName: app.app_name,
     repoUrl: app.repo_url,
     repoType: app.repo_type,
+    providerType: app.provider_type,
     lastSynced: app.last_synced,
   }));
   res.json({ apps: response });
@@ -21,29 +24,41 @@ appsRouter.get('/apps', (_req, res) => {
 
 // POST /api/apps — Register a new app
 appsRouter.post('/apps', (req, res, next) => {
-  const { appId, appName, pat } = req.body;
+  const { appId, appName, pat, providerType = 'mendix', repoUrl } = req.body;
 
   if (!appId || typeof appId !== 'string') {
     return next(createApiError('appId is required and must be a string', 400));
   }
 
   if (!pat || typeof pat !== 'string') {
-    return next(createApiError('pat (Personal Access Token) is required', 400));
+    return next(createApiError('pat (credentials) is required', 400));
   }
 
-  // Validate UUID format
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!uuidRegex.test(appId)) {
-    return next(createApiError('appId must be a valid UUID', 400));
+  // Validate provider type
+  const provType = (providerType as string) || 'mendix';
+  if (!isValidProviderType(provType)) {
+    return next(createApiError(`Invalid provider type: ${provType}. Valid types: mendix, github, gitlab, plain-git`, 400));
   }
 
-  const app = appModel.createApp(appId, pat, appName);
+  // Validate app ID format using the provider
+  const provider = getProvider(provType as ProviderType);
+  if (!provider.validateIdentifier(appId)) {
+    return next(createApiError(`Invalid App ID format for ${provider.displayName} provider.`, 400));
+  }
+
+  // For providers without getRepoUrl (e.g., plain-git), repoUrl is required
+  if (!provider.getRepoUrl && !repoUrl) {
+    return next(createApiError('repoUrl is required for this provider type.', 400));
+  }
+
+  const app = appModel.createApp(appId, pat, provType as ProviderType, appName, repoUrl);
   // Never return the PAT in the response
   res.status(201).json({
     appId: app.app_id,
     appName: app.app_name,
     repoUrl: app.repo_url,
     repoType: app.repo_type,
+    providerType: app.provider_type,
     lastSynced: app.last_synced,
     hasPat: true,
   });
@@ -53,7 +68,7 @@ appsRouter.post('/apps', (req, res, next) => {
 appsRouter.put('/apps/:appId/pat', validateAppId, (req, res, next) => {
   const { pat } = req.body;
   if (!pat || typeof pat !== 'string') {
-    return next(createApiError('pat (Personal Access Token) is required', 400));
+    return next(createApiError('pat (credentials) is required', 400));
   }
 
   const app = appModel.getApp(req.params.appId);
@@ -62,7 +77,7 @@ appsRouter.put('/apps/:appId/pat', validateAppId, (req, res, next) => {
   }
 
   appModel.updateAppPat(req.params.appId, pat);
-  res.json({ message: 'PAT updated successfully' });
+  res.json({ message: 'Credentials updated successfully' });
 });
 
 // GET /api/apps/:appId — Get a single app
@@ -76,6 +91,7 @@ appsRouter.get('/apps/:appId', validateAppId, (req, res, next) => {
     appName: app.app_name,
     repoUrl: app.repo_url,
     repoType: app.repo_type,
+    providerType: app.provider_type,
     lastSynced: app.last_synced,
   });
 });

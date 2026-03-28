@@ -1,3 +1,5 @@
+import { AlertCircle, RefreshCw } from 'lucide-react';
+
 interface ErrorMessageProps {
   message: string;
   onRetry?: () => void;
@@ -5,16 +7,20 @@ interface ErrorMessageProps {
 
 export default function ErrorMessage({ message, onRetry }: ErrorMessageProps) {
   return (
-    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+    <div className="bg-red-50 border border-red-200/60 rounded-2xl p-5 animate-fade-in">
       <div className="flex items-start gap-3">
-        <span className="text-red-500 text-lg">!</span>
+        <div className="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
+          <AlertCircle className="w-4.5 h-4.5 text-red-500" />
+        </div>
         <div className="flex-1">
-          <p className="text-sm text-red-800">{message}</p>
+          <p className="text-sm font-medium text-red-800 mb-1">Something went wrong</p>
+          <p className="text-sm text-red-600">{message}</p>
           {onRetry && (
             <button
               onClick={onRetry}
-              className="mt-2 text-sm text-red-600 underline hover:text-red-800"
+              className="mt-3 flex items-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-800 transition-colors"
             >
+              <RefreshCw className="w-3.5 h-3.5" />
               Try again
             </button>
           )}

@@ -1,8 +1,9 @@
 import { getDatabase, saveDatabase } from '../config/database.js';
 import type { AppRow } from '../types/db.types.js';
+import type { ProviderType } from '../types/provider.types.js';
 
 // Fields returned in public queries — PAT is excluded for security
-const PUBLIC_FIELDS = 'app_id, app_name, repo_url, repo_type, last_synced';
+const PUBLIC_FIELDS = 'app_id, app_name, repo_url, repo_type, provider_type, last_synced';
 
 function rowToApp(row: Record<string, unknown>): AppRow {
   return {
@@ -11,19 +12,28 @@ function rowToApp(row: Record<string, unknown>): AppRow {
     pat: row.pat as string | null ?? null,
     repo_url: row.repo_url as string | null,
     repo_type: row.repo_type as string | null,
+    provider_type: (row.provider_type as ProviderType) || 'mendix',
     last_synced: row.last_synced as string | null,
   };
 }
 
-export function createApp(appId: string, pat: string, appName?: string): AppRow {
+export function createApp(
+  appId: string,
+  pat: string,
+  providerType: ProviderType = 'mendix',
+  appName?: string,
+  repoUrl?: string
+): AppRow {
   const db = getDatabase();
   db.run(
-    `INSERT INTO apps (app_id, app_name, pat)
-     VALUES (?, ?, ?)
+    `INSERT INTO apps (app_id, app_name, pat, provider_type, repo_url)
+     VALUES (?, ?, ?, ?, ?)
      ON CONFLICT(app_id) DO UPDATE SET
        app_name = COALESCE(excluded.app_name, apps.app_name),
-       pat = excluded.pat`,
-    [appId, appName || null, pat]
+       pat = excluded.pat,
+       provider_type = excluded.provider_type,
+       repo_url = COALESCE(excluded.repo_url, apps.repo_url)`,
+    [appId, appName || null, pat, providerType, repoUrl || null]
   );
   saveDatabase();
   return getApp(appId)!;
@@ -65,6 +75,22 @@ export function getAppPat(appId: string): string | null {
     const row = stmt.getAsObject();
     stmt.free();
     return (row.pat as string) || null;
+  }
+  stmt.free();
+  return null;
+}
+
+/**
+ * Get the provider type for an app.
+ */
+export function getAppProviderType(appId: string): ProviderType | null {
+  const db = getDatabase();
+  const stmt = db.prepare('SELECT provider_type FROM apps WHERE app_id = ?');
+  stmt.bind([appId]);
+  if (stmt.step()) {
+    const row = stmt.getAsObject();
+    stmt.free();
+    return (row.provider_type as ProviderType) || 'mendix';
   }
   stmt.free();
   return null;

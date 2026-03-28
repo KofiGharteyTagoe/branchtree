@@ -21,15 +21,15 @@ export default function TimelineAxis({ startDate, endDate, width }: TimelineAxis
   }
 
   return (
-    <div className="relative h-6 border-t border-gray-300" style={{ width }}>
+    <div className="relative h-7 border-t border-surface-200" style={{ width }}>
       {ticks.map((tick, i) => (
         <div
           key={i}
           className="absolute top-0"
           style={{ left: tick.x }}
         >
-          <div className="w-px h-2 bg-gray-300" />
-          <span className="text-[10px] text-gray-500 absolute top-2 -translate-x-1/2">
+          <div className="w-px h-2 bg-surface-300" />
+          <span className="text-[10px] text-gray-400 font-medium absolute top-2.5 -translate-x-1/2">
             {tick.label}
           </span>
         </div>

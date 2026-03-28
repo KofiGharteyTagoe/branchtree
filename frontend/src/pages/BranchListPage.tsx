@@ -26,14 +26,17 @@ export default function BranchListPage({ appId }: BranchListPageProps) {
     return (
       <EmptyState
         title="No Branches"
-        description="Sync the app first to load branch data from the Mendix Team Server."
+        description="Sync the app first to load branch data from the repository."
       />
     );
   }
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-2xl font-bold text-gray-900">Branches</h2>
+    <div className="space-y-5 animate-fade-in">
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900">Branches</h2>
+        <p className="text-sm text-gray-500 mt-0.5">Browse and inspect all branches in your repository</p>
+      </div>
 
       <AlertBanner alerts={alerts} />
 

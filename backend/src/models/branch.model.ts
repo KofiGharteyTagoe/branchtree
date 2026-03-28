@@ -14,12 +14,12 @@ function rowToBranch(row: Record<string, unknown>): BranchRow {
     first_unique_commit_date: row.first_unique_commit_date as string | null,
     latest_commit_hash: row.latest_commit_hash as string | null,
     latest_commit_date: row.latest_commit_date as string | null,
-    mendix_version: row.mendix_version as string | null,
     commits_ahead_of_main: (row.commits_ahead_of_main as number) || 0,
     commits_behind_main: (row.commits_behind_main as number) || 0,
     is_merged: (row.is_merged as number) || 0,
     is_stale: (row.is_stale as number) || 0,
     branch_type: row.branch_type as string | null,
+    provider_metadata: (row.provider_metadata as string) || '{}',
   };
 }
 
@@ -83,21 +83,32 @@ export function getBranch(appId: string, name: string): BranchRow | undefined {
   return undefined;
 }
 
-export function updateBranchMendixData(
+export function updateBranchProviderData(
   appId: string,
   name: string,
   data: {
-    mendixVersion: string;
-    latestCommitHash: string;
-    latestCommitDate: string;
+    latestCommitHash?: string;
+    latestCommitDate?: string;
+    providerMetadata: Record<string, unknown>;
   }
 ): void {
   const db = getDatabase();
+  const updates: string[] = ['provider_metadata = ?'];
+  const params: unknown[] = [JSON.stringify(data.providerMetadata)];
+
+  if (data.latestCommitHash) {
+    updates.push('latest_commit_hash = ?');
+    params.push(data.latestCommitHash);
+  }
+  if (data.latestCommitDate) {
+    updates.push('latest_commit_date = ?');
+    params.push(data.latestCommitDate);
+  }
+
+  params.push(appId, name);
   db.run(
-    `UPDATE branches
-     SET mendix_version = ?, latest_commit_hash = ?, latest_commit_date = ?
-     WHERE app_id = ? AND name = ?`,
-    [data.mendixVersion, data.latestCommitHash, data.latestCommitDate, appId, name]
+    `UPDATE branches SET ${updates.join(', ')} WHERE app_id = ? AND name = ?`,
+    params as (string | null)[]
   );
   saveDatabase();
 }

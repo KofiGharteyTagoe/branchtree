@@ -1,4 +1,5 @@
 import { apiClient } from '../config/api';
+import type { ProviderType } from '../types/app.types';
 import type {
   AppsResponse,
   BranchesResponse,
@@ -13,8 +14,14 @@ export async function getApps(): Promise<AppsResponse> {
   return res.data;
 }
 
-export async function registerApp(appId: string, pat: string, appName?: string): Promise<void> {
-  await apiClient.post('/apps', { appId, pat, appName });
+export async function registerApp(
+  appId: string,
+  pat: string,
+  providerType: ProviderType = 'mendix',
+  appName?: string,
+  repoUrl?: string
+): Promise<void> {
+  await apiClient.post('/apps', { appId, pat, providerType, appName, repoUrl });
 }
 
 export async function updateAppPat(appId: string, pat: string): Promise<void> {

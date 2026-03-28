@@ -2,6 +2,7 @@ import simpleGit from 'simple-git';
 import fs from 'fs';
 import path from 'path';
 import { config } from '../config/env.js';
+import type { GitProvider } from '../types/provider.types.js';
 
 /**
  * Returns the local bare repo path for a given app.
@@ -11,24 +12,32 @@ function getRepoPath(appId: string): string {
 }
 
 /**
- * Clone a Mendix Team Server repo as a bare clone, or fetch updates
- * if it already exists. Returns the path to the bare repo.
+ * Clone a Git repo as a bare clone, or fetch updates if it already exists.
+ * Uses the provider to build the correct authenticated URL.
  *
- * @param appId - The Mendix app ID
+ * @param appId - The app identifier
  * @param repoUrl - The Git repository URL
- * @param pat - The Personal Access Token for this app
+ * @param credentials - The authentication token/PAT
+ * @param provider - The Git provider (determines auth URL format)
  *
  * IMPORTANT: This is a READ-ONLY bare clone. Never modify it.
  */
-export async function cloneOrFetch(appId: string, repoUrl: string, pat: string): Promise<string> {
+export async function cloneOrFetch(
+  appId: string,
+  repoUrl: string,
+  credentials: string,
+  provider: GitProvider
+): Promise<string> {
   const repoPath = getRepoPath(appId);
 
   const gitEnv = {
     GIT_TERMINAL_PROMPT: '0',
   };
 
-  // Build the authenticated URL by direct string replacement (no URL encoding)
-  const authedUrl = buildAuthUrl(repoUrl, pat);
+  // Build the authenticated URL using the provider's auth format
+  const authedUrl = credentials
+    ? provider.buildAuthUrl(repoUrl, credentials)
+    : repoUrl;
 
   if (!fs.existsSync(repoPath)) {
     const parentDir = path.dirname(repoPath);
@@ -42,7 +51,7 @@ export async function cloneOrFetch(appId: string, repoUrl: string, pat: string):
       await git.clone(authedUrl, repoPath, ['--bare']);
       console.log(`Bare clone complete: ${repoPath}`);
     } catch (err) {
-      throw sanitizeGitError(err, pat);
+      throw sanitizeGitError(err, credentials);
     }
   } else {
     console.log(`Fetching updates for app ${appId}...`);
@@ -52,7 +61,7 @@ export async function cloneOrFetch(appId: string, repoUrl: string, pat: string):
       await git.fetch(['--all', '--prune']);
       console.log(`Fetch complete for app ${appId}`);
     } catch (err) {
-      throw sanitizeGitError(err, pat);
+      throw sanitizeGitError(err, credentials);
     }
   }
 
@@ -60,23 +69,18 @@ export async function cloneOrFetch(appId: string, repoUrl: string, pat: string):
 }
 
 /**
- * Build authenticated URL by direct string insertion.
- * Does NOT use `new URL()` which would URL-encode special characters
- * in the PAT and break authentication.
+ * Remove credentials from any error messages/stacks to prevent credential leakage.
  */
-function buildAuthUrl(repoUrl: string, pat: string): string {
-  return repoUrl.replace('https://', `https://pat:${pat}@`);
-}
-
-/**
- * Remove PAT from any error messages/stacks to prevent credential leakage.
- */
-function sanitizeGitError(err: unknown, pat: string): Error {
+function sanitizeGitError(err: unknown, credentials: string): Error {
   if (err instanceof Error) {
     const sanitized = new Error(
-      err.message.replaceAll(pat, '***PAT_REDACTED***')
+      credentials
+        ? err.message.replaceAll(credentials, '***REDACTED***')
+        : err.message
     );
-    sanitized.stack = err.stack?.replaceAll(pat, '***PAT_REDACTED***');
+    sanitized.stack = credentials
+      ? err.stack?.replaceAll(credentials, '***REDACTED***')
+      : err.stack;
     return sanitized;
   }
   return new Error('Git operation failed');

@@ -30,11 +30,13 @@ export default function TimelinePage({ appId }: TimelinePageProps) {
   }
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-2xl font-bold text-gray-900">Branch Timeline</h2>
-      <p className="text-sm text-gray-500">
-        Horizontal view of branch lifetimes. Click a branch bar to see details.
-      </p>
+    <div className="space-y-5 animate-fade-in">
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900">Branch Timeline</h2>
+        <p className="text-sm text-gray-500 mt-0.5">
+          Horizontal view of branch lifetimes. Click a branch to see details.
+        </p>
+      </div>
 
       <TimelineChart
         branches={branches}

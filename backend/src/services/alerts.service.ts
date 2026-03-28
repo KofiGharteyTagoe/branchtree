@@ -76,26 +76,43 @@ function getDivergenceAlerts(branches: BranchRow[]): ApiAlert[] {
 }
 
 /**
- * Detect branches using different Mendix versions than main.
+ * Helper to safely extract a version string from provider_metadata JSON.
+ */
+function getVersionFromMetadata(branch: BranchRow): string | null {
+  try {
+    const metadata = JSON.parse(branch.provider_metadata);
+    // Check for mendixVersion (Mendix provider) or generic version field
+    return metadata.mendixVersion || metadata.version || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Detect branches using different platform versions than main.
+ * Works with any provider that stores version info in provider_metadata.
  */
 function getVersionMismatchAlerts(branches: BranchRow[]): ApiAlert[] {
   const alerts: ApiAlert[] = [];
 
   const mainBranch = branches.find((b) => b.branch_type === 'main');
-  if (!mainBranch?.mendix_version) return alerts;
+  if (!mainBranch) return alerts;
 
-  const mainVersion = mainBranch.mendix_version;
+  const mainVersion = getVersionFromMetadata(mainBranch);
+  if (!mainVersion) return alerts;
 
   for (const branch of branches) {
     if (branch.branch_type === 'main') continue;
     if (branch.is_merged) continue;
-    if (!branch.mendix_version) continue;
 
-    if (branch.mendix_version !== mainVersion) {
+    const branchVersion = getVersionFromMetadata(branch);
+    if (!branchVersion) continue;
+
+    if (branchVersion !== mainVersion) {
       alerts.push({
         type: 'version_mismatch',
         branchName: branch.name,
-        message: `Branch "${branch.name}" uses Mendix ${branch.mendix_version} (main uses ${mainVersion})`,
+        message: `Branch "${branch.name}" uses version ${branchVersion} (main uses ${mainVersion})`,
         severity: 'warning',
       });
     }

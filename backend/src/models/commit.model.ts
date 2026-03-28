@@ -14,8 +14,7 @@ function rowToCommit(row: Record<string, unknown>): CommitRow {
     is_merge_commit: (row.is_merge_commit as number) || 0,
     branch_names: (row.branch_names as string) || '[]',
     ref_names: row.ref_names as string | null,
-    mendix_version: row.mendix_version as string | null,
-    related_stories: (row.related_stories as string) || '[]',
+    provider_metadata: (row.provider_metadata as string) || '{}',
   };
 }
 
@@ -84,14 +83,14 @@ export function getCommitsByBranch(appId: string, branchName: string): CommitRow
 export function enrichCommit(
   appId: string,
   hash: string,
-  data: { mendixVersion: string; relatedStories: string[] }
+  providerMetadata: Record<string, unknown>
 ): void {
   const db = getDatabase();
   db.run(
     `UPDATE commits
-     SET mendix_version = ?, related_stories = ?
+     SET provider_metadata = ?
      WHERE hash = ? AND app_id = ?`,
-    [data.mendixVersion, JSON.stringify(data.relatedStories), hash, appId]
+    [JSON.stringify(providerMetadata), hash, appId]
   );
   saveDatabase();
 }

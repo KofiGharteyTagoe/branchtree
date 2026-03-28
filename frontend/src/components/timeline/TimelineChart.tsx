@@ -26,7 +26,6 @@ export default function TimelineChart({ branches, onBranchClick }: TimelineChart
       if (created && created > latest) latest = created;
     }
 
-    // Add some padding
     const range = latest - earliest || 1;
     return {
       startDate: new Date(earliest - range * 0.05),
@@ -42,7 +41,6 @@ export default function TimelineChart({ branches, onBranchClick }: TimelineChart
     return (ms / totalMs) * chartWidth;
   };
 
-  // Sort: main first, then by creation date
   const sorted = useMemo(() => {
     return [...branches].sort((a, b) => {
       if (a.type === 'main') return -1;
@@ -54,26 +52,28 @@ export default function TimelineChart({ branches, onBranchClick }: TimelineChart
   }, [branches]);
 
   return (
-    <div className="card">
+    <div className="card-static">
       <div className="overflow-x-auto">
         <div style={{ minWidth: chartWidth + 200 }}>
-          {sorted.map((branch) => {
-            const startX = getX(branch.createdDate);
-            const endX = getX(branch.latestCommitDate) || chartWidth;
-            const width = Math.max(endX - startX, 4);
+          <div className="space-y-0.5">
+            {sorted.map((branch) => {
+              const startX = getX(branch.createdDate);
+              const endX = getX(branch.latestCommitDate) || chartWidth;
+              const width = Math.max(endX - startX, 4);
 
-            return (
-              <TimelineBar
-                key={branch.name}
-                branch={branch}
-                startX={startX}
-                width={width}
-                onClick={onBranchClick}
-              />
-            );
-          })}
+              return (
+                <TimelineBar
+                  key={branch.name}
+                  branch={branch}
+                  startX={startX}
+                  width={width}
+                  onClick={onBranchClick}
+                />
+              );
+            })}
+          </div>
 
-          <div className="ml-[172px]">
+          <div className="ml-[172px] mt-2">
             <TimelineAxis
               startDate={startDate}
               endDate={endDate}

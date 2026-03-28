@@ -1,8 +1,11 @@
+export type ProviderType = 'mendix' | 'github' | 'gitlab' | 'plain-git';
+
 export interface App {
   appId: string;
   appName: string | null;
   repoUrl: string | null;
   repoType: string | null;
+  providerType: ProviderType;
   lastSynced: string | null;
 }
 
@@ -15,11 +18,12 @@ export interface Branch {
   forkedFromBranch: string | null;
   latestCommitHash: string | null;
   latestCommitDate: string | null;
-  mendixVersion: string | null;
   commitsAhead: number;
   commitsBehind: number;
   isMerged: boolean;
   isStale: boolean;
+  /** Provider-specific metadata (e.g., { mendixVersion } for Mendix apps) */
+  providerMetadata: Record<string, unknown>;
 }
 
 export interface Commit {
@@ -31,8 +35,8 @@ export interface Commit {
   parentHashes: string[];
   isMergeCommit: boolean;
   refs: string | null;
-  mendixVersion: string | null;
-  relatedStories: string[];
+  /** Provider-specific metadata (e.g., { mendixVersion, relatedStories } for Mendix) */
+  providerMetadata: Record<string, unknown>;
 }
 
 export interface MergeEvent {

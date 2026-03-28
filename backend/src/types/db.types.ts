@@ -1,9 +1,12 @@
+import type { ProviderType } from './provider.types.js';
+
 export interface AppRow {
   app_id: string;
   app_name: string | null;
   pat: string | null;
   repo_url: string | null;
   repo_type: string | null;
+  provider_type: ProviderType;
   last_synced: string | null;
 }
 
@@ -18,12 +21,12 @@ export interface BranchRow {
   first_unique_commit_date: string | null;
   latest_commit_hash: string | null;
   latest_commit_date: string | null;
-  mendix_version: string | null;
   commits_ahead_of_main: number;
   commits_behind_main: number;
   is_merged: number;
   is_stale: number;
   branch_type: string | null;
+  provider_metadata: string; // JSON object
 }
 
 export interface CommitRow {
@@ -37,8 +40,7 @@ export interface CommitRow {
   is_merge_commit: number;
   branch_names: string; // JSON array
   ref_names: string | null;
-  mendix_version: string | null;
-  related_stories: string; // JSON array
+  provider_metadata: string; // JSON object
 }
 
 export interface MergeEventRow {

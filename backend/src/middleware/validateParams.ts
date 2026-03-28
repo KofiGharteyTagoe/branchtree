@@ -1,13 +1,13 @@
 import type { Request, Response, NextFunction } from 'express';
 import { createApiError } from './errorHandler.js';
 
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 export function validateAppId(req: Request, _res: Response, next: NextFunction): void {
   const { appId } = req.params;
-  if (!appId || !UUID_REGEX.test(appId)) {
-    return next(createApiError('Invalid App ID format. Expected a UUID.', 400));
+  if (!appId || appId.trim().length === 0) {
+    return next(createApiError('App ID is required.', 400));
   }
+  // Allow any non-empty string — different providers use different ID formats
+  // (UUID for Mendix, owner/repo for GitHub, integer for GitLab, etc.)
   next();
 }
 

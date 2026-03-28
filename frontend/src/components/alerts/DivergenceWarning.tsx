@@ -1,3 +1,4 @@
+import { GitBranch } from 'lucide-react';
 import type { Alert } from '../../types/app.types';
 
 interface DivergenceWarningProps {
@@ -9,16 +10,19 @@ export default function DivergenceWarning({ alerts }: DivergenceWarningProps) {
   if (divergenceAlerts.length === 0) return null;
 
   return (
-    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-      <h4 className="text-sm font-semibold text-yellow-800 mb-1">
-        Diverged Branches ({divergenceAlerts.length})
-      </h4>
-      <p className="text-xs text-yellow-700 mb-2">
+    <div className="bg-amber-50 border border-amber-200/60 rounded-2xl p-4">
+      <div className="flex items-center gap-2 mb-2">
+        <GitBranch className="w-4 h-4 text-amber-500" />
+        <h4 className="text-sm font-semibold text-amber-800">
+          Diverged Branches ({divergenceAlerts.length})
+        </h4>
+      </div>
+      <p className="text-xs text-amber-600 mb-2 ml-6">
         These branches are significantly behind main. Merge main into them to stay current.
       </p>
-      <ul className="text-xs text-yellow-600 space-y-0.5">
+      <ul className="space-y-1 ml-6">
         {divergenceAlerts.map((alert, i) => (
-          <li key={i}>- {alert.message}</li>
+          <li key={i} className="text-xs text-amber-600 list-disc">{alert.message}</li>
         ))}
       </ul>
     </div>

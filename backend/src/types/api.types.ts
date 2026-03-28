@@ -1,8 +1,11 @@
+import type { ProviderType } from './provider.types.js';
+
 export interface ApiApp {
   appId: string;
   appName: string | null;
   repoUrl: string | null;
   repoType: string | null;
+  providerType: ProviderType;
   lastSynced: string | null;
 }
 
@@ -15,11 +18,12 @@ export interface ApiBranch {
   forkedFromBranch: string | null;
   latestCommitHash: string | null;
   latestCommitDate: string | null;
-  mendixVersion: string | null;
   commitsAhead: number;
   commitsBehind: number;
   isMerged: boolean;
   isStale: boolean;
+  /** Provider-specific metadata (e.g., { mendixVersion, relatedStories } for Mendix) */
+  providerMetadata: Record<string, unknown>;
 }
 
 export interface ApiCommit {
@@ -31,8 +35,8 @@ export interface ApiCommit {
   parentHashes: string[];
   isMergeCommit: boolean;
   refs: string | null;
-  mendixVersion: string | null;
-  relatedStories: string[];
+  /** Provider-specific metadata (e.g., { mendixVersion, relatedStories } for Mendix) */
+  providerMetadata: Record<string, unknown>;
 }
 
 export interface ApiGraphData {

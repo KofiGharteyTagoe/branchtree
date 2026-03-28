@@ -8,6 +8,7 @@ export function initializeDatabase(db: Database): void {
       pat TEXT,
       repo_url TEXT,
       repo_type TEXT,
+      provider_type TEXT NOT NULL DEFAULT 'mendix',
       last_synced TEXT
     )
   `);
@@ -24,12 +25,12 @@ export function initializeDatabase(db: Database): void {
       first_unique_commit_date TEXT,
       latest_commit_hash TEXT,
       latest_commit_date TEXT,
-      mendix_version TEXT,
       commits_ahead_of_main INTEGER DEFAULT 0,
       commits_behind_main INTEGER DEFAULT 0,
       is_merged INTEGER DEFAULT 0,
       is_stale INTEGER DEFAULT 0,
       branch_type TEXT,
+      provider_metadata TEXT DEFAULT '{}',
       UNIQUE(app_id, name)
     )
   `);
@@ -46,8 +47,7 @@ export function initializeDatabase(db: Database): void {
       is_merge_commit INTEGER DEFAULT 0,
       branch_names TEXT DEFAULT '[]',
       ref_names TEXT,
-      mendix_version TEXT,
-      related_stories TEXT DEFAULT '[]',
+      provider_metadata TEXT DEFAULT '{}',
       PRIMARY KEY (hash, app_id)
     )
   `);
@@ -67,4 +67,40 @@ export function initializeDatabase(db: Database): void {
   db.run(`CREATE INDEX IF NOT EXISTS idx_branches_app_id ON branches(app_id)`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_commits_app_id ON commits(app_id)`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_merge_events_app_id ON merge_events(app_id)`);
+
+  // Migrations for existing databases — safe to run multiple times (ALTER TABLE IF NOT EXISTS)
+  migrateToProviderSchema(db);
+}
+
+/**
+ * Migrate existing databases from Mendix-specific columns to provider-agnostic schema.
+ * Uses try/catch because SQLite doesn't support IF NOT EXISTS for ALTER TABLE.
+ */
+function migrateToProviderSchema(db: Database): void {
+  // Add provider_type to apps
+  try { db.run(`ALTER TABLE apps ADD COLUMN provider_type TEXT NOT NULL DEFAULT 'mendix'`); } catch { /* column already exists */ }
+
+  // Add provider_metadata to branches (replacing mendix_version)
+  try { db.run(`ALTER TABLE branches ADD COLUMN provider_metadata TEXT DEFAULT '{}'`); } catch { /* column already exists */ }
+
+  // Migrate mendix_version data to provider_metadata in branches
+  try {
+    db.run(`
+      UPDATE branches
+      SET provider_metadata = json_object('mendixVersion', mendix_version)
+      WHERE mendix_version IS NOT NULL AND provider_metadata = '{}'
+    `);
+  } catch { /* json_object may not be available or data already migrated */ }
+
+  // Add provider_metadata to commits (replacing mendix_version + related_stories)
+  try { db.run(`ALTER TABLE commits ADD COLUMN provider_metadata TEXT DEFAULT '{}'`); } catch { /* column already exists */ }
+
+  // Migrate mendix_version and related_stories to provider_metadata in commits
+  try {
+    db.run(`
+      UPDATE commits
+      SET provider_metadata = json_object('mendixVersion', mendix_version, 'relatedStories', json(related_stories))
+      WHERE mendix_version IS NOT NULL AND provider_metadata = '{}'
+    `);
+  } catch { /* json functions may not be available or data already migrated */ }
 }

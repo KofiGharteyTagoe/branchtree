@@ -1,19 +1,28 @@
 import { useState, useMemo } from 'react';
-import type { Branch } from '../../types/app.types';
+import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import type { Branch, ProviderType } from '../../types/app.types';
 import BranchRow from './BranchRow';
 import BranchFilters from './BranchFilters';
 
 interface BranchTableProps {
   branches: Branch[];
   onBranchClick: (branch: Branch) => void;
+  providerType?: ProviderType;
 }
 
-export default function BranchTable({ branches, onBranchClick }: BranchTableProps) {
+export default function BranchTable({ branches, onBranchClick, providerType }: BranchTableProps) {
   const [typeFilter, setTypeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortField, setSortField] = useState<keyof Branch>('name');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+
+  const hasVersionData = useMemo(() => {
+    return branches.some((b) => {
+      const meta = b.providerMetadata;
+      return meta?.mendixVersion || meta?.version;
+    });
+  }, [branches]);
 
   const filtered = useMemo(() => {
     let result = branches;
@@ -65,10 +74,14 @@ export default function BranchTable({ branches, onBranchClick }: BranchTableProp
     }
   };
 
-  const sortIcon = (field: keyof Branch) => {
-    if (sortField !== field) return '';
-    return sortDir === 'asc' ? ' ↑' : ' ↓';
+  const SortIcon = ({ field }: { field: keyof Branch }) => {
+    if (sortField !== field) return <ArrowUpDown className="w-3 h-3 text-gray-300" />;
+    return sortDir === 'asc'
+      ? <ArrowUp className="w-3 h-3 text-brand-500" />
+      : <ArrowDown className="w-3 h-3 text-brand-500" />;
   };
+
+  const versionLabel = providerType === 'mendix' ? 'Mx Version' : 'Version';
 
   return (
     <div className="space-y-4">
@@ -81,50 +94,52 @@ export default function BranchTable({ branches, onBranchClick }: BranchTableProp
         onSearchChange={setSearchQuery}
       />
 
-      <div className="card p-0 overflow-hidden">
+      <div className="card-static p-0 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
+            <thead>
+              <tr className="border-b border-surface-200/80">
                 <th
                   onClick={() => handleSort('name')}
-                  className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:text-gray-900"
+                  className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700 transition-colors"
                 >
-                  Branch{sortIcon('name')}
+                  <span className="flex items-center gap-1.5">Branch <SortIcon field="name" /></span>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Type
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Created By
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Created
                 </th>
                 <th
                   onClick={() => handleSort('latestCommitDate')}
-                  className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:text-gray-900"
+                  className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700 transition-colors"
                 >
-                  Last Activity{sortIcon('latestCommitDate')}
+                  <span className="flex items-center gap-1.5">Last Activity <SortIcon field="latestCommitDate" /></span>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
                 <th
                   onClick={() => handleSort('commitsBehind')}
-                  className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:text-gray-900"
+                  className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700 transition-colors"
                 >
-                  Behind{sortIcon('commitsBehind')}
+                  <span className="flex items-center gap-1.5">Behind <SortIcon field="commitsBehind" /></span>
                 </th>
                 <th
                   onClick={() => handleSort('commitsAhead')}
-                  className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:text-gray-900"
+                  className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700 transition-colors"
                 >
-                  Ahead{sortIcon('commitsAhead')}
+                  <span className="flex items-center gap-1.5">Ahead <SortIcon field="commitsAhead" /></span>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Mx Version
-                </th>
+                {hasVersionData && (
+                  <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    {versionLabel}
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -133,6 +148,7 @@ export default function BranchTable({ branches, onBranchClick }: BranchTableProp
                   key={branch.name}
                   branch={branch}
                   onClick={onBranchClick}
+                  showVersion={hasVersionData}
                 />
               ))}
             </tbody>
@@ -140,13 +156,13 @@ export default function BranchTable({ branches, onBranchClick }: BranchTableProp
         </div>
 
         {filtered.length === 0 && (
-          <div className="text-center py-8 text-sm text-gray-500">
+          <div className="text-center py-12 text-sm text-gray-400">
             No branches match your filters
           </div>
         )}
       </div>
 
-      <p className="text-xs text-gray-400">
+      <p className="text-xs text-gray-400 font-medium">
         Showing {filtered.length} of {branches.length} branches
       </p>
     </div>

@@ -5,39 +5,58 @@ import * as mergeEventModel from '../models/mergeEvent.model.js';
 import * as gitCloneService from './gitClone.service.js';
 import * as gitParserService from './gitParser.service.js';
 import * as gitAnalysisService from './gitAnalysis.service.js';
-import * as mendixApiService from './mendixApi.service.js';
+import { getProvider } from '../providers/index.js';
 import type { SyncResult } from '../types/api.types.js';
 
 /**
- * Full sync pipeline for a Mendix app.
+ * Full sync pipeline for an app.
  *
  * Steps:
- * 1. Get PAT from database
- * 2. Get repo info from Mendix API
+ * 1. Get credentials and provider from database
+ * 2. Resolve the repo URL (provider-specific: API call or direct)
  * 3. Clone or fetch bare repo
  * 4. Extract commit graph from Git
  * 5. Analyze branch relationships
- * 6. Enrich with Mendix API data
+ * 6. Enrich with provider-specific data (if supported)
  * 7. Detect merge events
  */
 export async function syncApp(appId: string): Promise<SyncResult> {
   console.log(`Starting sync for app ${appId}...`);
 
-  // Step 1: Get PAT for this app from database
+  // Step 1: Get credentials and provider type
   const pat = appModel.getAppPat(appId);
   if (!pat) {
     throw new Error(
-      'No PAT configured for this app. Update the app with a valid Personal Access Token.'
+      'No PAT/credentials configured for this app. Update the app with valid credentials.'
     );
   }
 
-  // Step 2: Get repo info from Mendix API
-  const repoInfo = await mendixApiService.getRepoInfo(appId, pat);
-  appModel.updateAppRepoInfo(appId, repoInfo.url, repoInfo.type);
-  console.log(`Repo URL: ${repoInfo.url}`);
+  const providerType = appModel.getAppProviderType(appId);
+  if (!providerType) {
+    throw new Error('App not found');
+  }
+  const provider = getProvider(providerType);
+
+  // Step 2: Resolve the repo URL
+  const app = appModel.getApp(appId);
+  let repoUrl = app?.repo_url;
+
+  if (!repoUrl && provider.getRepoUrl) {
+    // Provider needs to fetch the URL (e.g., Mendix API)
+    const repoInfo = await provider.getRepoUrl(appId, pat);
+    repoUrl = repoInfo.url;
+    appModel.updateAppRepoInfo(appId, repoInfo.url, repoInfo.type);
+    console.log(`Repo URL resolved: ${repoUrl}`);
+  }
+
+  if (!repoUrl) {
+    throw new Error(
+      'No repository URL configured. Please provide a repo URL or ensure the provider can resolve it.'
+    );
+  }
 
   // Step 3: Clone or fetch bare repo
-  const repoPath = await gitCloneService.cloneOrFetch(appId, repoInfo.url, pat);
+  const repoPath = await gitCloneService.cloneOrFetch(appId, repoUrl, pat, provider);
 
   // Step 4: Extract full commit graph from Git
   const commits = await gitParserService.parseGitLog(repoPath);
@@ -54,8 +73,8 @@ export async function syncApp(appId: string): Promise<SyncResult> {
   }
   console.log(`Analyzed ${uniqueBranches.length} branches`);
 
-  // Step 6: Enrich with Mendix API data
-  await enrichWithMendixData(appId, pat);
+  // Step 6: Enrich with provider-specific data (if supported)
+  await enrichWithProviderData(appId, pat, provider);
 
   // Step 7: Detect merge events
   const mergeCommits = commits.filter((c) => c.isMergeCommit);
@@ -85,35 +104,44 @@ export async function syncApp(appId: string): Promise<SyncResult> {
 }
 
 /**
- * Enrich branches and commits with Mendix API metadata.
+ * Enrich branches and commits with provider-specific metadata.
+ * Only runs if the provider supports enrichment. Failures are logged but don't fail the sync.
  */
-async function enrichWithMendixData(appId: string, pat: string): Promise<void> {
-  try {
-    const mendixBranches = await mendixApiService.getAllBranches(appId, pat);
+async function enrichWithProviderData(
+  appId: string,
+  credentials: string,
+  provider: import('../types/provider.types.js').GitProvider
+): Promise<void> {
+  // Enrich branches
+  if (provider.enrichBranches) {
+    try {
+      const branchMetadata = await provider.enrichBranches(appId, credentials);
+      for (const meta of branchMetadata) {
+        branchModel.updateBranchProviderData(appId, meta.branchName, {
+          latestCommitHash: meta.latestCommitHash,
+          latestCommitDate: meta.latestCommitDate,
+          providerMetadata: meta.providerMetadata,
+        });
+      }
+      console.log(`Enriched ${branchMetadata.length} branches with ${provider.displayName} data`);
+    } catch (err) {
+      console.warn(`Failed to enrich branches with ${provider.displayName} data:`, err);
+    }
+  }
 
-    for (const branch of mendixBranches) {
-      branchModel.updateBranchMendixData(appId, branch.name, {
-        mendixVersion: branch.latestCommit.mendixVersion,
-        latestCommitHash: branch.latestCommit.id,
-        latestCommitDate: branch.latestCommit.date,
-      });
-
+  // Enrich commits per branch
+  if (provider.enrichCommits) {
+    const branches = branchModel.getBranches(appId);
+    for (const branch of branches) {
       try {
-        const mendixCommits = await mendixApiService.getBranchCommits(appId, branch.name, pat);
-        for (const commit of mendixCommits) {
-          commitModel.enrichCommit(appId, commit.id, {
-            mendixVersion: commit.mendixVersion,
-            relatedStories: commit.relatedStories?.map((s) => s.id) || [],
-          });
+        const commitMetadata = await provider.enrichCommits(appId, branch.name, credentials);
+        for (const meta of commitMetadata) {
+          commitModel.enrichCommit(appId, meta.commitHash, meta.providerMetadata);
         }
       } catch (err) {
         console.warn(`Failed to enrich commits for branch ${branch.name}:`, err);
       }
     }
-
-    console.log(`Enriched ${mendixBranches.length} branches with Mendix data`);
-  } catch (err) {
-    console.warn('Failed to enrich with Mendix API data:', err);
   }
 }
 

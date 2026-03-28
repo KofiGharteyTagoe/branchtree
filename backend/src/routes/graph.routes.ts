@@ -6,6 +6,10 @@ import type { ApiGraphData } from '../types/api.types.js';
 
 export const graphRouter = Router();
 
+function safeJsonParse(json: string, fallback: unknown = {}): unknown {
+  try { return JSON.parse(json); } catch { return fallback; }
+}
+
 // GET /api/apps/:appId/graph — Full DAG data for visualization
 graphRouter.get('/apps/:appId/graph', validateAppId, (req, res) => {
   const commits = commitModel.getCommits(req.params.appId);
@@ -21,8 +25,7 @@ graphRouter.get('/apps/:appId/graph', validateAppId, (req, res) => {
     parentHashes: JSON.parse(c.parent_hashes) as string[],
     isMergeCommit: c.is_merge_commit === 1,
     refs: c.ref_names,
-    mendixVersion: c.mendix_version,
-    relatedStories: JSON.parse(c.related_stories) as string[],
+    providerMetadata: safeJsonParse(c.provider_metadata) as Record<string, unknown>,
   }));
 
   // Build edges from parent relationships
@@ -43,11 +46,11 @@ graphRouter.get('/apps/:appId/graph', validateAppId, (req, res) => {
     forkedFromBranch: b.forked_from_branch,
     latestCommitHash: b.latest_commit_hash,
     latestCommitDate: b.latest_commit_date,
-    mendixVersion: b.mendix_version,
     commitsAhead: b.commits_ahead_of_main,
     commitsBehind: b.commits_behind_main,
     isMerged: b.is_merged === 1,
     isStale: b.is_stale === 1,
+    providerMetadata: safeJsonParse(b.provider_metadata) as Record<string, unknown>,
   }));
 
   const response: ApiGraphData = {

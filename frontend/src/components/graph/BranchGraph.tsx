@@ -11,12 +11,12 @@ interface BranchGraphProps {
 }
 
 const BRANCH_COLORS: Record<string, string> = {
-  main: '#0595DD',
-  feature: '#2ECC71',
-  release: '#F39C12',
-  hotfix: '#E74C3C',
-  development: '#9B59B6',
-  unknown: '#95A5A6',
+  main: '#6366F1',
+  feature: '#10B981',
+  release: '#F59E0B',
+  hotfix: '#EF4444',
+  development: '#8B5CF6',
+  unknown: '#6B7280',
 };
 
 const LANE_WIDTH = 30;
@@ -27,11 +27,9 @@ const DOT_RADIUS = 5;
 export default function BranchGraph({ data, onCommitClick, onBranchClick }: BranchGraphProps) {
   const [zoom, setZoom] = useState(1);
 
-  // Assign each branch a lane (column index)
   const branchLanes = useMemo(() => {
     const lanes = new Map<string, number>();
     const sorted = [...data.branches].sort((a, b) => {
-      // Main first, then by type, then alphabetical
       if (a.type === 'main') return -1;
       if (b.type === 'main') return 1;
       return a.name.localeCompare(b.name);
@@ -40,25 +38,19 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
     return lanes;
   }, [data.branches]);
 
-  // Sort commits by date (oldest first for bottom-up rendering)
   const sortedCommits = useMemo(() => {
     return [...data.nodes]
       .filter((c) => c.date)
       .sort((a, b) => new Date(a.date!).getTime() - new Date(b.date!).getTime());
   }, [data.nodes]);
 
-  // Map commits to their positions
   const commitPositions = useMemo(() => {
     const positions = new Map<string, { x: number; y: number; branch: Branch | null }>();
-    const commitIndex = new Map<string, Commit>();
-    sortedCommits.forEach((c) => commitIndex.set(c.hash, c));
 
-    // Determine which branch each commit belongs to (by refs)
     sortedCommits.forEach((commit, i) => {
       let assignedBranch: Branch | null = null;
       let lane = 0;
 
-      // Check if this commit is the tip of any branch
       for (const branch of data.branches) {
         if (branch.latestCommitHash === commit.hash) {
           assignedBranch = branch;
@@ -67,7 +59,6 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
         }
       }
 
-      // Check refs for branch assignment
       if (!assignedBranch && commit.refs) {
         for (const branch of data.branches) {
           if (commit.refs.includes(branch.name)) {
@@ -78,7 +69,6 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
         }
       }
 
-      // Default: try to place on parent's lane
       if (!assignedBranch && commit.parentHashes.length > 0) {
         const parentPos = positions.get(commit.parentHashes[0]);
         if (parentPos) {
@@ -110,14 +100,14 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
         />
       </div>
 
-      <div className="card p-0 overflow-auto" style={{ maxHeight: '70vh' }}>
+      <div className="card-static p-0 overflow-auto" style={{ maxHeight: '70vh' }}>
         <svg
           width={svgWidth * zoom}
           height={svgHeight * zoom}
           viewBox={`0 0 ${svgWidth} ${svgHeight}`}
           className="min-w-full"
         >
-          {/* Draw edges (parent → child connections) */}
+          {/* Draw edges */}
           {sortedCommits.map((commit) =>
             commit.parentHashes.map((parentHash) => {
               const from = commitPositions.get(parentHash);
@@ -134,7 +124,7 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
                   y1={from.y}
                   x2={to.x}
                   y2={to.y}
-                  stroke={isMergeLine ? '#F39C12' : '#CBD5E1'}
+                  stroke={isMergeLine ? '#F59E0B' : '#E2E8F0'}
                   strokeWidth={isMergeLine ? 2 : 1.5}
                   strokeDasharray={isMergeLine ? '4,4' : undefined}
                 />
@@ -160,17 +150,17 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
                   cx={pos.x}
                   cy={pos.y}
                   r={commit.isMergeCommit ? DOT_RADIUS + 2 : DOT_RADIUS}
-                  fill={commit.isMergeCommit ? '#F39C12' : color}
+                  fill={commit.isMergeCommit ? '#F59E0B' : color}
                   stroke="white"
                   strokeWidth={2}
                 />
-                {/* Commit message label for non-crowded areas */}
                 <text
                   x={pos.x + 15}
                   y={pos.y + 4}
                   fontSize={10}
-                  fill="#6B7280"
+                  fill="#94A3B8"
                   className="select-none"
+                  fontFamily="Inter, system-ui, sans-serif"
                 >
                   {commit.message?.substring(0, 40)}
                   {(commit.message?.length || 0) > 40 ? '...' : ''}
@@ -179,7 +169,7 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
             );
           })}
 
-          {/* Draw branch labels at the top */}
+          {/* Draw branch labels */}
           {data.branches.map((branch) => {
             const lane = branchLanes.get(branch.name) ?? 0;
             const x = PADDING + lane * LANE_WIDTH;
@@ -197,7 +187,7 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
                   width={8}
                   height={svgHeight - 20}
                   fill={color}
-                  opacity={0.08}
+                  opacity={0.06}
                   rx={4}
                 />
                 <text
@@ -208,6 +198,7 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
                   textAnchor="middle"
                   fontWeight="bold"
                   className="select-none"
+                  fontFamily="Inter, system-ui, sans-serif"
                   transform={`rotate(-45, ${x}, 25)`}
                 >
                   {branch.name}
@@ -218,7 +209,7 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
         </svg>
       </div>
 
-      <p className="text-xs text-gray-400">
+      <p className="text-xs text-gray-400 font-medium">
         {sortedCommits.length} commits across {data.branches.length} branches
       </p>
     </div>

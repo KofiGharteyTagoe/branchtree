@@ -8,6 +8,10 @@ import type { ApiBranch } from '../types/api.types.js';
 
 export const branchesRouter = Router();
 
+function safeJsonParse(json: string, fallback: unknown = {}): unknown {
+  try { return JSON.parse(json); } catch { return fallback; }
+}
+
 // GET /api/apps/:appId/branches — List all branches with metadata
 branchesRouter.get('/apps/:appId/branches', validateAppId, (req, res) => {
   const branches = branchModel.getBranches(req.params.appId);
@@ -22,11 +26,11 @@ branchesRouter.get('/apps/:appId/branches', validateAppId, (req, res) => {
     forkedFromBranch: b.forked_from_branch,
     latestCommitHash: b.latest_commit_hash,
     latestCommitDate: b.latest_commit_date,
-    mendixVersion: b.mendix_version,
     commitsAhead: b.commits_ahead_of_main,
     commitsBehind: b.commits_behind_main,
     isMerged: b.is_merged === 1,
     isStale: b.is_stale === 1,
+    providerMetadata: safeJsonParse(b.provider_metadata) as Record<string, unknown>,
   }));
 
   res.json({ branches: response, alerts });
@@ -55,11 +59,11 @@ branchesRouter.get(
         forkedFromBranch: branch.forked_from_branch,
         latestCommitHash: branch.latest_commit_hash,
         latestCommitDate: branch.latest_commit_date,
-        mendixVersion: branch.mendix_version,
         commitsAhead: branch.commits_ahead_of_main,
         commitsBehind: branch.commits_behind_main,
         isMerged: branch.is_merged === 1,
         isStale: branch.is_stale === 1,
+        providerMetadata: safeJsonParse(branch.provider_metadata) as Record<string, unknown>,
       },
       commits: commits.map((c) => ({
         hash: c.hash,
@@ -70,8 +74,7 @@ branchesRouter.get(
         parentHashes: JSON.parse(c.parent_hashes),
         isMergeCommit: c.is_merge_commit === 1,
         refs: c.ref_names,
-        mendixVersion: c.mendix_version,
-        relatedStories: JSON.parse(c.related_stories),
+        providerMetadata: safeJsonParse(c.provider_metadata) as Record<string, unknown>,
       })),
     });
   }

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as api from '../services/api.service';
+import type { ProviderType } from '../types/app.types';
 
 export function useApps() {
   return useQuery({
@@ -11,8 +12,19 @@ export function useApps() {
 export function useRegisterApp() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ appId, pat, appName }: { appId: string; pat: string; appName?: string }) =>
-      api.registerApp(appId, pat, appName),
+    mutationFn: ({
+      appId,
+      pat,
+      providerType = 'mendix',
+      appName,
+      repoUrl,
+    }: {
+      appId: string;
+      pat: string;
+      providerType?: ProviderType;
+      appName?: string;
+      repoUrl?: string;
+    }) => api.registerApp(appId, pat, providerType, appName, repoUrl),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['apps'] });
     },
