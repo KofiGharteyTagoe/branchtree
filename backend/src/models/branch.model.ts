@@ -53,7 +53,7 @@ export function upsertBranch(appId: string, data: BranchAnalysis): void {
       data.commitsBehind,
       data.isMerged ? 1 : 0,
       data.branchType,
-    ]
+    ],
   );
   saveDatabase();
 }
@@ -90,7 +90,7 @@ export function updateBranchProviderData(
     latestCommitHash?: string;
     latestCommitDate?: string;
     providerMetadata: Record<string, unknown>;
-  }
+  },
 ): void {
   const db = getDatabase();
   const updates: string[] = ['provider_metadata = ?'];
@@ -108,7 +108,7 @@ export function updateBranchProviderData(
   params.push(appId, name);
   db.run(
     `UPDATE branches SET ${updates.join(', ')} WHERE app_id = ? AND name = ?`,
-    params as (string | null)[]
+    params as (string | null)[],
   );
   saveDatabase();
 }

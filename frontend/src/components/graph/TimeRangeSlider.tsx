@@ -51,7 +51,7 @@ export default function TimeRangeSlider({
         onChange(daysAgo(days), undefined);
       }
     },
-    [onChange]
+    [onChange],
   );
 
   // Default to 90 days on mount
@@ -59,7 +59,7 @@ export default function TimeRangeSlider({
     if (!since && totalCommits > 500) {
       handlePreset(90);
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   const showingCount = returnedCommits ?? totalCommits;
 

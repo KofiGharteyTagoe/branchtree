@@ -7,7 +7,13 @@ const AUTH_TAG_LENGTH = 16;
 const SEPARATOR = ':';
 
 function getKey(): Buffer {
-  return Buffer.from(getEncryptionKey(), 'hex');
+  const hex = getEncryptionKey();
+  if (!/^[0-9a-fA-F]{64}$/.test(hex)) {
+    throw new Error(
+      "Encryption key must be exactly 32 bytes (64 hex characters). Generate one with: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\"",
+    );
+  }
+  return Buffer.from(hex, 'hex');
 }
 
 export function encrypt(plaintext: string): string {
@@ -15,11 +21,9 @@ export function encrypt(plaintext: string): string {
   const cipher = createCipheriv(ALGORITHM, getKey(), iv);
   const encrypted = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
   const authTag = cipher.getAuthTag();
-  return [
-    iv.toString('base64'),
-    authTag.toString('base64'),
-    encrypted.toString('base64'),
-  ].join(SEPARATOR);
+  return [iv.toString('base64'), authTag.toString('base64'), encrypted.toString('base64')].join(
+    SEPARATOR,
+  );
 }
 
 export function decrypt(encryptedValue: string): string {

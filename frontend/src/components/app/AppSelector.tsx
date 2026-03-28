@@ -18,12 +18,11 @@ export default function AppSelector({ selectedAppId, onAppChange }: AppSelectorP
         className="appearance-none bg-surface-50 text-sm text-gray-700 font-medium rounded-xl pl-4 pr-9 py-2 border border-surface-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-400 transition-all duration-200 min-w-[180px] cursor-pointer"
         disabled={isLoading}
       >
-        <option value="">
-          {isLoading ? 'Loading...' : 'Select an app'}
-        </option>
+        <option value="">{isLoading ? 'Loading...' : 'Select an app'}</option>
         {apps.map((app) => (
           <option key={app.appId} value={app.appId}>
-            {app.appName || app.appId}{app.providerType && app.providerType !== 'mendix' ? ` (${app.providerType})` : ''}
+            {app.appName || app.appId}
+            {app.providerType && app.providerType !== 'mendix' ? ` (${app.providerType})` : ''}
           </option>
         ))}
       </select>

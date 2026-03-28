@@ -10,11 +10,11 @@ function rowToApp(row: Record<string, unknown>): AppRow {
   return {
     app_id: row.app_id as string,
     app_name: row.app_name as string | null,
-    pat: row.pat as string | null ?? null,
+    pat: (row.pat as string | null) ?? null,
     repo_url: row.repo_url as string | null,
     repo_type: row.repo_type as string | null,
     provider_type: (row.provider_type as ProviderType) || 'mendix',
-    owner_id: row.owner_id as number | null ?? null,
+    owner_id: (row.owner_id as number | null) ?? null,
     last_synced: row.last_synced as string | null,
   };
 }
@@ -25,7 +25,7 @@ export function createApp(
   providerType: ProviderType = 'mendix',
   appName?: string,
   repoUrl?: string,
-  ownerId?: number
+  ownerId?: number,
 ): AppRow {
   const db = getDatabase();
   const encryptedPat = encrypt(pat);
@@ -38,7 +38,7 @@ export function createApp(
        provider_type = excluded.provider_type,
        repo_url = COALESCE(excluded.repo_url, apps.repo_url),
        owner_id = COALESCE(excluded.owner_id, apps.owner_id)`,
-    [appId, appName || null, encryptedPat, providerType, repoUrl || null, ownerId || null]
+    [appId, appName || null, encryptedPat, providerType, repoUrl || null, ownerId || null],
   );
   saveDatabase();
   return getApp(appId)!;
@@ -136,11 +136,7 @@ export function updateAppPat(appId: string, pat: string): void {
   saveDatabase();
 }
 
-export function updateAppRepoInfo(
-  appId: string,
-  repoUrl: string,
-  repoType: string
-): void {
+export function updateAppRepoInfo(appId: string, repoUrl: string, repoType: string): void {
   const db = getDatabase();
   db.run('UPDATE apps SET repo_url = ?, repo_type = ? WHERE app_id = ?', [
     repoUrl,
@@ -152,10 +148,7 @@ export function updateAppRepoInfo(
 
 export function updateLastSynced(appId: string): void {
   const db = getDatabase();
-  db.run('UPDATE apps SET last_synced = ? WHERE app_id = ?', [
-    new Date().toISOString(),
-    appId,
-  ]);
+  db.run('UPDATE apps SET last_synced = ? WHERE app_id = ?', [new Date().toISOString(), appId]);
   saveDatabase();
 }
 

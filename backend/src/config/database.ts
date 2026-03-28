@@ -5,6 +5,8 @@ import { config } from './env.js';
 import { initializeDatabase } from '../db/schema.js';
 
 let db: Database | null = null;
+let dirty = false;
+let saveTimeout: ReturnType<typeof setTimeout> | null = null;
 
 export async function initDb(): Promise<Database> {
   if (db) return db;
@@ -32,7 +34,7 @@ export async function initDb(): Promise<Database> {
   initializeDatabase(db);
 
   // Save to disk
-  saveDatabase();
+  saveDatabaseSync();
 
   return db;
 }
@@ -44,16 +46,54 @@ export function getDatabase(): Database {
   return db;
 }
 
+/**
+ * Mark the database as dirty and schedule a debounced write.
+ * This avoids blocking the event loop with synchronous writes on every mutation.
+ */
 export function saveDatabase(): void {
+  if (!db) return;
+  dirty = true;
+  if (!saveTimeout) {
+    saveTimeout = setTimeout(() => {
+      flushDatabase();
+    }, 1000);
+  }
+}
+
+/**
+ * Immediately flush the database to disk if dirty.
+ * Call after batch operations (e.g., sync) to ensure data is persisted.
+ */
+export function flushDatabase(): void {
+  if (saveTimeout) {
+    clearTimeout(saveTimeout);
+    saveTimeout = null;
+  }
+  if (!db || !dirty) return;
+  const data = db.export();
+  const buffer = Buffer.from(data);
+  fs.writeFileSync(config.dbPath, buffer);
+  dirty = false;
+}
+
+/**
+ * Synchronous save — used during initialization and shutdown.
+ */
+export function saveDatabaseSync(): void {
   if (!db) return;
   const data = db.export();
   const buffer = Buffer.from(data);
   fs.writeFileSync(config.dbPath, buffer);
+  dirty = false;
+  if (saveTimeout) {
+    clearTimeout(saveTimeout);
+    saveTimeout = null;
+  }
 }
 
 export function closeDatabase(): void {
   if (db) {
-    saveDatabase();
+    saveDatabaseSync();
     db.close();
     db = null;
   }

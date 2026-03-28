@@ -1,3 +1,4 @@
+import fs from 'fs';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -33,3 +34,33 @@ export const config = {
 } as const;
 
 export type Config = typeof config;
+
+/**
+ * Validate that the environment is sane before startup.
+ * Throws on fatal misconfiguration; warns on non-fatal issues.
+ */
+export function validateEnvironment(): void {
+  const { port, dataDir } = config;
+
+  if (port < 1 || port > 65535) {
+    throw new Error(`PORT must be between 1 and 65535, got: ${port}`);
+  }
+
+  // Ensure data directory exists or can be created
+  if (!fs.existsSync(dataDir)) {
+    try {
+      fs.mkdirSync(dataDir, { recursive: true });
+    } catch (err) {
+      throw new Error(`Cannot create DATA_DIR at ${dataDir}`, { cause: err });
+    }
+  }
+
+  // Verify the data directory is writable
+  try {
+    const testFile = path.join(dataDir, '.write-test');
+    fs.writeFileSync(testFile, 'test');
+    fs.unlinkSync(testFile);
+  } catch (err) {
+    throw new Error(`DATA_DIR ${dataDir} is not writable`, { cause: err });
+  }
+}

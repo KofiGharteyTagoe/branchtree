@@ -8,15 +8,26 @@ interface AppRegistrationProps {
   onClose: () => void;
 }
 
-const PROVIDERS: { value: ProviderType; label: string; idLabel: string; idPlaceholder: string; idHelp: string; patLabel: string; patHelp: string; needsRepoUrl: boolean }[] = [
+const PROVIDERS: {
+  value: ProviderType;
+  label: string;
+  idLabel: string;
+  idPlaceholder: string;
+  idHelp: string;
+  patLabel: string;
+  patHelp: string;
+  needsRepoUrl: boolean;
+}[] = [
   {
     value: 'mendix',
     label: 'Mendix',
     idLabel: 'App ID',
     idPlaceholder: 'e.g. c0af1725-edae-4345-aea7-2f94f7760e33',
-    idHelp: 'Find this in the Mendix Portal URL: https://sprintr.home.mendix.com/link/project/YOUR_APP_ID',
+    idHelp:
+      'Find this in the Mendix Portal URL: https://sprintr.home.mendix.com/link/project/YOUR_APP_ID',
     patLabel: 'Personal Access Token (PAT)',
-    patHelp: 'Get your PAT from Mendix Developer Settings. Select scope: mx:modelrepository:repo:read',
+    patHelp:
+      'Get your PAT from Mendix Developer Settings. Select scope: mx:modelrepository:repo:read',
     needsRepoUrl: false,
   },
   {
@@ -109,9 +120,7 @@ export default function AppRegistration({ onRegistered, onClose }: AppRegistrati
           <form onSubmit={handleSubmit} className="px-6 pb-6 pt-2 space-y-5">
             {/* Provider Selector */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Provider
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Provider</label>
               <div className="flex gap-2 flex-wrap">
                 {PROVIDERS.map((p) => (
                   <button
@@ -155,7 +164,10 @@ export default function AppRegistration({ onRegistered, onClose }: AppRegistrati
             {/* Repo URL (only for providers that need it) */}
             {providerConfig.needsRepoUrl && (
               <div>
-                <label htmlFor="reg-repoUrl" className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label
+                  htmlFor="reg-repoUrl"
+                  className="block text-sm font-medium text-gray-700 mb-1.5"
+                >
                   Repository URL <span className="text-red-400">*</span>
                 </label>
                 <input
@@ -167,7 +179,9 @@ export default function AppRegistration({ onRegistered, onClose }: AppRegistrati
                   className="input"
                   required
                 />
-                <p className="mt-1.5 text-xs text-gray-400">The HTTPS clone URL of the Git repository</p>
+                <p className="mt-1.5 text-xs text-gray-400">
+                  The HTTPS clone URL of the Git repository
+                </p>
               </div>
             )}
 
@@ -191,7 +205,10 @@ export default function AppRegistration({ onRegistered, onClose }: AppRegistrati
 
             {/* App Name */}
             <div>
-              <label htmlFor="reg-appName" className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label
+                htmlFor="reg-appName"
+                className="block text-sm font-medium text-gray-700 mb-1.5"
+              >
                 Display Name <span className="text-xs text-gray-400">(optional)</span>
               </label>
               <input
@@ -219,11 +236,7 @@ export default function AppRegistration({ onRegistered, onClose }: AppRegistrati
                 {registerApp.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
                 {registerApp.isPending ? 'Registering...' : 'Register App'}
               </button>
-              <button
-                type="button"
-                onClick={onClose}
-                className="btn-secondary"
-              >
+              <button type="button" onClick={onClose} className="btn-secondary">
                 Cancel
               </button>
             </div>

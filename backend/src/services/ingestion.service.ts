@@ -6,6 +6,8 @@ import * as gitCloneService from './gitClone.service.js';
 import * as gitParserService from './gitParser.service.js';
 import * as gitAnalysisService from './gitAnalysis.service.js';
 import { getProvider } from '../providers/index.js';
+import { flushDatabase } from '../config/database.js';
+import { logger } from '../utils/logger.js';
 import type { SyncResult } from '../types/api.types.js';
 
 /**
@@ -21,13 +23,13 @@ import type { SyncResult } from '../types/api.types.js';
  * 7. Detect merge events
  */
 export async function syncApp(appId: string): Promise<SyncResult> {
-  console.log(`Starting sync for app ${appId}...`);
+  logger.info(`Starting sync for app ${appId}...`);
 
   // Step 1: Get credentials and provider type
   const pat = appModel.getAppPat(appId);
   if (!pat) {
     throw new Error(
-      'No PAT/credentials configured for this app. Update the app with valid credentials.'
+      'No PAT/credentials configured for this app. Update the app with valid credentials.',
     );
   }
 
@@ -46,12 +48,12 @@ export async function syncApp(appId: string): Promise<SyncResult> {
     const repoInfo = await provider.getRepoUrl(appId, pat);
     repoUrl = repoInfo.url;
     appModel.updateAppRepoInfo(appId, repoInfo.url, repoInfo.type);
-    console.log(`Repo URL resolved: ${repoUrl}`);
+    logger.info(`Repo URL resolved: ${repoUrl}`);
   }
 
   if (!repoUrl) {
     throw new Error(
-      'No repository URL configured. Please provide a repo URL or ensure the provider can resolve it.'
+      'No repository URL configured. Please provide a repo URL or ensure the provider can resolve it.',
     );
   }
 
@@ -61,7 +63,7 @@ export async function syncApp(appId: string): Promise<SyncResult> {
   // Step 4: Extract full commit graph from Git
   const commits = await gitParserService.parseGitLog(repoPath);
   commitModel.upsertCommits(appId, commits);
-  console.log(`Parsed ${commits.length} commits from Git`);
+  logger.info(`Parsed ${commits.length} commits from Git`);
 
   // Step 5: Analyze branch relationships
   const branchNames = await gitAnalysisService.listBranches(repoPath);
@@ -71,7 +73,7 @@ export async function syncApp(appId: string): Promise<SyncResult> {
     const analysis = await gitAnalysisService.analyzeBranch(repoPath, branchName);
     branchModel.upsertBranch(appId, analysis);
   }
-  console.log(`Analyzed ${uniqueBranches.length} branches`);
+  logger.info(`Analyzed ${uniqueBranches.length} branches`);
 
   // Step 6: Enrich with provider-specific data (if supported)
   await enrichWithProviderData(appId, pat, provider);
@@ -86,7 +88,7 @@ export async function syncApp(appId: string): Promise<SyncResult> {
       ...parseMergeBranches(mc.message),
     });
   }
-  console.log(`Detected ${mergeCommits.length} merge events`);
+  logger.info(`Detected ${mergeCommits.length} merge events`);
 
   // Update last synced timestamp
   appModel.updateLastSynced(appId);
@@ -99,7 +101,10 @@ export async function syncApp(appId: string): Promise<SyncResult> {
     syncedAt: new Date().toISOString(),
   };
 
-  console.log(`Sync complete for app ${appId}`, result);
+  // Flush all pending database writes to disk after batch operations
+  flushDatabase();
+
+  logger.info({ result }, `Sync complete for app ${appId}`);
   return result;
 }
 
@@ -110,7 +115,7 @@ export async function syncApp(appId: string): Promise<SyncResult> {
 async function enrichWithProviderData(
   appId: string,
   credentials: string,
-  provider: import('../types/provider.types.js').GitProvider
+  provider: import('../types/provider.types.js').GitProvider,
 ): Promise<void> {
   // Enrich branches
   if (provider.enrichBranches) {
@@ -123,9 +128,9 @@ async function enrichWithProviderData(
           providerMetadata: meta.providerMetadata,
         });
       }
-      console.log(`Enriched ${branchMetadata.length} branches with ${provider.displayName} data`);
+      logger.info(`Enriched ${branchMetadata.length} branches with ${provider.displayName} data`);
     } catch (err) {
-      console.warn(`Failed to enrich branches with ${provider.displayName} data:`, err);
+      logger.warn({ err }, `Failed to enrich branches with ${provider.displayName} data`);
     }
   }
 
@@ -139,7 +144,7 @@ async function enrichWithProviderData(
           commitModel.enrichCommit(appId, meta.commitHash, meta.providerMetadata);
         }
       } catch (err) {
-        console.warn(`Failed to enrich commits for branch ${branch.name}:`, err);
+        logger.warn({ err }, `Failed to enrich commits for branch ${branch.name}`);
       }
     }
   }

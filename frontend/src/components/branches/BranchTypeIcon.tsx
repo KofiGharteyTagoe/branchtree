@@ -5,7 +5,10 @@ interface BranchTypeIconProps {
   type: string | null;
 }
 
-const typeConfig: Record<BranchType, { label: string; color: 'blue' | 'green' | 'orange' | 'red' | 'purple' | 'gray' }> = {
+const typeConfig: Record<
+  BranchType,
+  { label: string; color: 'blue' | 'green' | 'orange' | 'red' | 'purple' | 'gray' }
+> = {
   main: { label: 'Main', color: 'blue' },
   feature: { label: 'Feature', color: 'green' },
   release: { label: 'Release', color: 'orange' },

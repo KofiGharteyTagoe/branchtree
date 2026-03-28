@@ -18,9 +18,7 @@ export default function Sidebar() {
               end={item.to === '/'}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-mendix-blue text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
+                  isActive ? 'bg-mendix-blue text-white' : 'text-gray-700 hover:bg-gray-100'
                 }`
               }
             >

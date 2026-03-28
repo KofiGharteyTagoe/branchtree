@@ -18,9 +18,7 @@ export default function BranchRow({ branch, onClick, showVersion }: BranchRowPro
     ? new Date(branch.latestCommitDate).toLocaleDateString()
     : 'N/A';
 
-  const created = branch.createdDate
-    ? new Date(branch.createdDate).toLocaleDateString()
-    : 'N/A';
+  const created = branch.createdDate ? new Date(branch.createdDate).toLocaleDateString() : 'N/A';
 
   return (
     <tr
@@ -33,16 +31,16 @@ export default function BranchRow({ branch, onClick, showVersion }: BranchRowPro
       <td className="px-5 py-3.5">
         <BranchTypeIcon type={branch.type} />
       </td>
-      <td className="px-5 py-3.5 text-sm text-gray-500">
-        {branch.createdBy || 'Unknown'}
-      </td>
+      <td className="px-5 py-3.5 text-sm text-gray-500">{branch.createdBy || 'Unknown'}</td>
       <td className="px-5 py-3.5 text-sm text-gray-500">{created}</td>
       <td className="px-5 py-3.5 text-sm text-gray-500">{lastActivity}</td>
       <td className="px-5 py-3.5">
         <BranchStatusBadge branch={branch} />
       </td>
       <td className="px-5 py-3.5">
-        <span className={`text-sm font-medium ${branch.commitsBehind > 20 ? 'text-amber-600' : 'text-gray-500'}`}>
+        <span
+          className={`text-sm font-medium ${branch.commitsBehind > 20 ? 'text-amber-600' : 'text-gray-500'}`}
+        >
           {branch.commitsBehind}
         </span>
       </td>
@@ -50,9 +48,7 @@ export default function BranchRow({ branch, onClick, showVersion }: BranchRowPro
         <span className="text-sm font-medium text-gray-500">{branch.commitsAhead}</span>
       </td>
       {showVersion && (
-        <td className="px-5 py-3.5 text-sm text-gray-500 font-mono">
-          {getVersion(branch)}
-        </td>
+        <td className="px-5 py-3.5 text-sm text-gray-500 font-mono">{getVersion(branch)}</td>
       )}
     </tr>
   );

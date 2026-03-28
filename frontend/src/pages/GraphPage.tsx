@@ -52,9 +52,7 @@ export default function GraphPage({ appId }: GraphPageProps) {
     });
 
     const nodeHashes = new Set(filteredNodes.map((n) => n.hash));
-    const filteredEdges = data.edges.filter(
-      (e) => nodeHashes.has(e.from) && nodeHashes.has(e.to)
-    );
+    const filteredEdges = data.edges.filter((e) => nodeHashes.has(e.from) && nodeHashes.has(e.to));
 
     return {
       ...data,
@@ -68,7 +66,7 @@ export default function GraphPage({ appId }: GraphPageProps) {
     (since: string | undefined, until: string | undefined) => {
       setQueryOptions((prev) => ({ ...prev, since, until }));
     },
-    []
+    [],
   );
 
   if (isLoading && !data) return <LoadingSpinner message="Loading branch graph..." />;
@@ -86,7 +84,9 @@ export default function GraphPage({ appId }: GraphPageProps) {
     <div className="space-y-4 animate-fade-in">
       <div>
         <h2 className="text-2xl font-bold text-gray-900">Branch Graph</h2>
-        <p className="text-sm text-gray-500 mt-0.5">Visualize your commit history and branch structure</p>
+        <p className="text-sm text-gray-500 mt-0.5">
+          Visualize your commit history and branch structure
+        </p>
       </div>
 
       {/* Scale controls */}
@@ -94,7 +94,11 @@ export default function GraphPage({ appId }: GraphPageProps) {
         <TimeRangeSlider
           oldestDate={data?.pagination?.oldestDate ?? summary.data?.oldestDate ?? null}
           newestDate={data?.pagination?.newestDate ?? summary.data?.newestDate ?? null}
-          totalCommits={data?.pagination?.totalCommits ?? summary.data?.totalCommits ?? filteredData.nodes.length}
+          totalCommits={
+            data?.pagination?.totalCommits ??
+            summary.data?.totalCommits ??
+            filteredData.nodes.length
+          }
           returnedCommits={data?.pagination?.returnedCommits}
           since={queryOptions.since}
           until={queryOptions.until}
@@ -108,10 +112,7 @@ export default function GraphPage({ appId }: GraphPageProps) {
         />
       </div>
 
-      <BranchGraph
-        data={filteredData}
-        onBranchClick={(branch) => setSelectedBranch(branch)}
-      />
+      <BranchGraph data={filteredData} onBranchClick={(branch) => setSelectedBranch(branch)} />
 
       {selectedBranch && (
         <BranchDetailPanel

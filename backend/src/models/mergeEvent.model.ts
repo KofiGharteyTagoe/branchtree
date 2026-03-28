@@ -21,13 +21,11 @@ export function upsertMergeEvent(
     targetBranch?: string;
     mergedBy: string;
     mergedDate: string;
-  }
+  },
 ): void {
   const db = getDatabase();
   // Check if already exists
-  const stmt = db.prepare(
-    'SELECT id FROM merge_events WHERE app_id = ? AND merge_commit_hash = ?'
-  );
+  const stmt = db.prepare('SELECT id FROM merge_events WHERE app_id = ? AND merge_commit_hash = ?');
   stmt.bind([appId, data.mergeCommitHash]);
   const exists = stmt.step();
   stmt.free();
@@ -45,7 +43,7 @@ export function upsertMergeEvent(
         data.targetBranch || null,
         data.mergedBy,
         data.mergedDate,
-      ]
+      ],
     );
     saveDatabase();
   }
@@ -53,9 +51,7 @@ export function upsertMergeEvent(
 
 export function getMergeEvents(appId: string): MergeEventRow[] {
   const db = getDatabase();
-  const stmt = db.prepare(
-    'SELECT * FROM merge_events WHERE app_id = ? ORDER BY merged_date DESC'
-  );
+  const stmt = db.prepare('SELECT * FROM merge_events WHERE app_id = ? ORDER BY merged_date DESC');
   stmt.bind([appId]);
   const rows: MergeEventRow[] = [];
   while (stmt.step()) {

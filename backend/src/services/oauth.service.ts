@@ -1,4 +1,10 @@
-import { getGoogleClientId, getGoogleClientSecret, getMicrosoftClientId, getMicrosoftClientSecret, getOauthCallbackUrl } from '../config/runtimeConfig.js';
+import {
+  getGoogleClientId,
+  getGoogleClientSecret,
+  getMicrosoftClientId,
+  getMicrosoftClientSecret,
+  getOauthCallbackUrl,
+} from '../config/runtimeConfig.js';
 
 export interface OAuthUserProfile {
   email: string;
@@ -10,7 +16,7 @@ export interface OAuthUserProfile {
 
 // --- Google OAuth ---
 
-export function getGoogleAuthUrl(): string {
+export function getGoogleAuthUrl(state: string): string {
   const params = new URLSearchParams({
     client_id: getGoogleClientId(),
     redirect_uri: `${getOauthCallbackUrl()}/api/auth/google/callback`,
@@ -18,6 +24,7 @@ export function getGoogleAuthUrl(): string {
     scope: 'openid email profile',
     access_type: 'offline',
     prompt: 'select_account',
+    state,
   });
   return `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
 }
@@ -70,7 +77,7 @@ export async function exchangeGoogleCode(code: string): Promise<OAuthUserProfile
 
 // --- Microsoft OAuth ---
 
-export function getMicrosoftAuthUrl(): string {
+export function getMicrosoftAuthUrl(state: string): string {
   const params = new URLSearchParams({
     client_id: getMicrosoftClientId(),
     redirect_uri: `${getOauthCallbackUrl()}/api/auth/microsoft/callback`,
@@ -78,6 +85,7 @@ export function getMicrosoftAuthUrl(): string {
     scope: 'openid email profile User.Read',
     response_mode: 'query',
     prompt: 'select_account',
+    state,
   });
   return `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?${params}`;
 }

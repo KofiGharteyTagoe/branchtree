@@ -16,16 +16,13 @@ interface BranchDetailPanelProps {
   onClose: () => void;
 }
 
-export default function BranchDetailPanel({
-  appId,
-  branch,
-  onClose,
-}: BranchDetailPanelProps) {
+export default function BranchDetailPanel({ appId, branch, onClose }: BranchDetailPanelProps) {
   const { data, isLoading, error } = useBranchDetail(appId, branch.name);
 
-  const version = (branch.providerMetadata?.mendixVersion as string)
-    || (branch.providerMetadata?.version as string)
-    || null;
+  const version =
+    (branch.providerMetadata?.mendixVersion as string) ||
+    (branch.providerMetadata?.version as string) ||
+    null;
 
   const hasStories = data?.commits?.some((c) => {
     const stories = c.providerMetadata?.relatedStories as string[] | undefined;
@@ -46,9 +43,7 @@ export default function BranchDetailPanel({
         <div className="px-6 py-5 border-b border-surface-200/80">
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
-              <h2 className="text-lg font-bold text-gray-900 truncate">
-                {branch.name}
-              </h2>
+              <h2 className="text-lg font-bold text-gray-900 truncate">{branch.name}</h2>
               <div className="flex items-center gap-2 mt-2">
                 <BranchTypeIcon type={branch.type} />
                 <BranchStatusBadge branch={branch} />
@@ -77,10 +72,18 @@ export default function BranchDetailPanel({
                   <InfoItem label="Created by" value={branch.createdBy || 'Unknown'} />
                   <InfoItem
                     label="Created"
-                    value={branch.createdDate ? new Date(branch.createdDate).toLocaleDateString() : 'Unknown'}
+                    value={
+                      branch.createdDate
+                        ? new Date(branch.createdDate).toLocaleDateString()
+                        : 'Unknown'
+                    }
                   />
                   <InfoItem label="Forked from" value={branch.forkedFromBranch || 'main'} />
-                  <InfoItem label="Behind main" value={String(branch.commitsBehind)} highlight={branch.commitsBehind > 20} />
+                  <InfoItem
+                    label="Behind main"
+                    value={String(branch.commitsBehind)}
+                    highlight={branch.commitsBehind > 20}
+                  />
                   <InfoItem label="Ahead of main" value={String(branch.commitsAhead)} />
                   {version && <InfoItem label="Version" value={version} />}
                 </dl>
@@ -128,7 +131,13 @@ export default function BranchDetailPanel({
   );
 }
 
-function SectionHeader({ icon: Icon, title }: { icon: React.ComponentType<{ className?: string }>; title: string }) {
+function SectionHeader({
+  icon: Icon,
+  title,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+}) {
   return (
     <div className="flex items-center gap-2">
       <Icon className="w-4 h-4 text-gray-400" />
@@ -137,11 +146,21 @@ function SectionHeader({ icon: Icon, title }: { icon: React.ComponentType<{ clas
   );
 }
 
-function InfoItem({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+function InfoItem({
+  label,
+  value,
+  highlight,
+}: {
+  label: string;
+  value: string;
+  highlight?: boolean;
+}) {
   return (
     <>
       <dt className="text-xs text-gray-400 font-medium">{label}</dt>
-      <dd className={`text-sm font-medium ${highlight ? 'text-amber-600' : 'text-gray-900'}`}>{value}</dd>
+      <dd className={`text-sm font-medium ${highlight ? 'text-amber-600' : 'text-gray-900'}`}>
+        {value}
+      </dd>
     </>
   );
 }

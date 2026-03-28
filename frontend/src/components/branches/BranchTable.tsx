@@ -30,9 +30,7 @@ export default function BranchTable({ branches, onBranchClick, providerType }: B
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       result = result.filter(
-        (b) =>
-          b.name.toLowerCase().includes(q) ||
-          b.createdBy?.toLowerCase().includes(q)
+        (b) => b.name.toLowerCase().includes(q) || b.createdBy?.toLowerCase().includes(q),
       );
     }
 
@@ -43,11 +41,16 @@ export default function BranchTable({ branches, onBranchClick, providerType }: B
     if (statusFilter) {
       result = result.filter((b) => {
         switch (statusFilter) {
-          case 'active': return !b.isMerged && !b.isStale;
-          case 'stale': return b.isStale;
-          case 'merged': return b.isMerged;
-          case 'diverged': return b.commitsBehind > 20;
-          default: return true;
+          case 'active':
+            return !b.isMerged && !b.isStale;
+          case 'stale':
+            return b.isStale;
+          case 'merged':
+            return b.isMerged;
+          case 'diverged':
+            return b.commitsBehind > 20;
+          default:
+            return true;
         }
       });
     }
@@ -76,9 +79,11 @@ export default function BranchTable({ branches, onBranchClick, providerType }: B
 
   const SortIcon = ({ field }: { field: keyof Branch }) => {
     if (sortField !== field) return <ArrowUpDown className="w-3 h-3 text-gray-300" />;
-    return sortDir === 'asc'
-      ? <ArrowUp className="w-3 h-3 text-brand-500" />
-      : <ArrowDown className="w-3 h-3 text-brand-500" />;
+    return sortDir === 'asc' ? (
+      <ArrowUp className="w-3 h-3 text-brand-500" />
+    ) : (
+      <ArrowDown className="w-3 h-3 text-brand-500" />
+    );
   };
 
   const versionLabel = providerType === 'mendix' ? 'Mx Version' : 'Version';
@@ -103,7 +108,9 @@ export default function BranchTable({ branches, onBranchClick, providerType }: B
                   onClick={() => handleSort('name')}
                   className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700 transition-colors"
                 >
-                  <span className="flex items-center gap-1.5">Branch <SortIcon field="name" /></span>
+                  <span className="flex items-center gap-1.5">
+                    Branch <SortIcon field="name" />
+                  </span>
                 </th>
                 <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Type
@@ -118,7 +125,9 @@ export default function BranchTable({ branches, onBranchClick, providerType }: B
                   onClick={() => handleSort('latestCommitDate')}
                   className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700 transition-colors"
                 >
-                  <span className="flex items-center gap-1.5">Last Activity <SortIcon field="latestCommitDate" /></span>
+                  <span className="flex items-center gap-1.5">
+                    Last Activity <SortIcon field="latestCommitDate" />
+                  </span>
                 </th>
                 <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Status
@@ -127,13 +136,17 @@ export default function BranchTable({ branches, onBranchClick, providerType }: B
                   onClick={() => handleSort('commitsBehind')}
                   className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700 transition-colors"
                 >
-                  <span className="flex items-center gap-1.5">Behind <SortIcon field="commitsBehind" /></span>
+                  <span className="flex items-center gap-1.5">
+                    Behind <SortIcon field="commitsBehind" />
+                  </span>
                 </th>
                 <th
                   onClick={() => handleSort('commitsAhead')}
                   className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700 transition-colors"
                 >
-                  <span className="flex items-center gap-1.5">Ahead <SortIcon field="commitsAhead" /></span>
+                  <span className="flex items-center gap-1.5">
+                    Ahead <SortIcon field="commitsAhead" />
+                  </span>
                 </th>
                 {hasVersionData && (
                   <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">

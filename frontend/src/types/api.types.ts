@@ -15,7 +15,7 @@ export interface BranchDetailResponse {
   commits: Commit[];
 }
 
-export interface GraphResponse extends GraphData {}
+export type GraphResponse = GraphData;
 
 export interface GraphSummaryResponse {
   totalCommits: number;

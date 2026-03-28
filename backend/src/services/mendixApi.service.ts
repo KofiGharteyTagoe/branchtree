@@ -42,7 +42,7 @@ export async function getAllBranches(appId: string, pat: string): Promise<Mendix
 
     const res = await client.get<MendixPaginatedResponse<MendixBranch>>(
       `/repositories/${appId}/branches`,
-      { params }
+      { params },
     );
 
     allBranches.push(...res.data.items);
@@ -58,7 +58,7 @@ export async function getAllBranches(appId: string, pat: string): Promise<Mendix
 export async function getBranchCommits(
   appId: string,
   branchName: string,
-  pat: string
+  pat: string,
 ): Promise<MendixCommit[]> {
   const client = createClient(pat);
   const allCommits: MendixCommit[] = [];
@@ -71,7 +71,7 @@ export async function getBranchCommits(
 
     const res = await client.get<MendixPaginatedResponse<MendixCommit>>(
       `/repositories/${appId}/branches/${encodedBranch}/commits`,
-      { params }
+      { params },
     );
 
     allCommits.push(...res.data.items);

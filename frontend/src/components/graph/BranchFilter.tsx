@@ -17,7 +17,11 @@ const BRANCH_TYPE_COLORS: Record<string, string> = {
   unknown: 'bg-branch-unknown',
 };
 
-export default function BranchFilter({ branches, visibleBranches, onVisibleChange }: BranchFilterProps) {
+export default function BranchFilter({
+  branches,
+  visibleBranches,
+  onVisibleChange,
+}: BranchFilterProps) {
   const [search, setSearch] = useState('');
   const [activeOnly, setActiveOnly] = useState(true);
   const [expanded, setExpanded] = useState(false);
@@ -48,9 +52,7 @@ export default function BranchFilter({ branches, visibleBranches, onVisibleChang
     if (newActive) {
       const protectedTypes = new Set(['main', 'development', 'release']);
       const visible = new Set(
-        branches
-          .filter((b) => protectedTypes.has(b.type || '') || !b.isStale)
-          .map((b) => b.name)
+        branches.filter((b) => protectedTypes.has(b.type || '') || !b.isStale).map((b) => b.name),
       );
       onVisibleChange(visible);
     } else {
@@ -109,7 +111,11 @@ export default function BranchFilter({ branches, visibleBranches, onVisibleChang
           onClick={() => setExpanded(!expanded)}
           className="ml-auto flex items-center gap-1 text-xs text-surface-500 hover:text-surface-700"
         >
-          {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+          {expanded ? (
+            <ChevronUp className="w-3.5 h-3.5" />
+          ) : (
+            <ChevronDown className="w-3.5 h-3.5" />
+          )}
           {expanded ? 'Less' : 'More'}
         </button>
       </div>

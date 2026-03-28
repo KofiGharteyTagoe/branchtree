@@ -3,6 +3,7 @@ import type { Request, Response, NextFunction } from 'express';
 import * as settings from '../models/settings.model.js';
 import * as userModel from '../models/user.model.js';
 import * as feedbackModel from '../models/feedback.model.js';
+import * as auditModel from '../models/audit.model.js';
 import { authenticate } from '../middleware/auth.js';
 
 export const adminRouter = Router();
@@ -43,15 +44,20 @@ adminRouter.put('/admin/settings', (req, res) => {
   // Protect auto-generated secrets from being set to empty
   const protectedKeys = ['jwt_secret', 'encryption_key'];
   for (const key of protectedKeys) {
-    if (key in updates && (!updates[key] || typeof updates[key] !== 'string' || updates[key].length < 32)) {
+    if (
+      key in updates &&
+      (!updates[key] || typeof updates[key] !== 'string' || updates[key].length < 32)
+    ) {
       return res.status(400).json({ error: `${key} must be at least 32 characters` });
     }
   }
 
   // Determine which keys are secrets
   const secretKeys = new Set([
-    'jwt_secret', 'encryption_key',
-    'google_client_secret', 'microsoft_client_secret',
+    'jwt_secret',
+    'encryption_key',
+    'google_client_secret',
+    'microsoft_client_secret',
     'setup_token',
   ]);
 
@@ -67,6 +73,13 @@ adminRouter.put('/admin/settings', (req, res) => {
     applied.push(key);
   }
 
+  auditModel.logAction(
+    req.user!.userId,
+    'update_settings',
+    'settings',
+    undefined,
+    applied.join(', '),
+  );
   res.json({ message: `Updated ${applied.length} setting(s)`, applied });
 });
 
@@ -81,6 +94,7 @@ adminRouter.delete('/admin/settings/:key', (req, res) => {
   }
 
   settings.deleteSetting(key);
+  auditModel.logAction(req.user!.userId, 'delete_setting', 'settings', key);
   res.json({ message: `Setting '${key}' deleted` });
 });
 
@@ -152,6 +166,7 @@ adminRouter.post('/admin/users/:userId/restrict', (req: Request, res: Response) 
   }
 
   userModel.restrictUser(userId, reason);
+  auditModel.logAction(req.user!.userId, 'restrict_user', 'user', String(userId), reason);
   res.json({ message: `User ${target.email} has been restricted` });
 });
 
@@ -165,6 +180,7 @@ adminRouter.post('/admin/users/:userId/unrestrict', (req: Request, res: Response
   }
 
   userModel.unrestrictUser(userId);
+  auditModel.logAction(req.user!.userId, 'unrestrict_user', 'user', String(userId));
   res.json({ message: `Restriction removed from ${target.email}` });
 });
 
@@ -184,6 +200,7 @@ adminRouter.delete('/admin/users/:userId', (req: Request, res: Response) => {
   }
 
   userModel.deleteUser(userId);
+  auditModel.logAction(req.user!.userId, 'delete_user', 'user', String(userId), target.email);
   res.json({ message: `User ${target.email} has been deleted` });
 });
 

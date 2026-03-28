@@ -30,7 +30,7 @@ export function upsertUser(
   oauthProvider: string,
   oauthId: string,
   displayName?: string | null,
-  avatarUrl?: string | null
+  avatarUrl?: string | null,
 ): UserRow {
   const db = getDatabase();
   db.run(
@@ -41,7 +41,7 @@ export function upsertUser(
        display_name = COALESCE(excluded.display_name, users.display_name),
        avatar_url = COALESCE(excluded.avatar_url, users.avatar_url),
        last_login = datetime('now')`,
-    [email, oauthProvider, oauthId, displayName || null, avatarUrl || null]
+    [email, oauthProvider, oauthId, displayName || null, avatarUrl || null],
   );
   saveDatabase();
   return getUserByOAuth(oauthProvider, oauthId)!;
@@ -56,7 +56,7 @@ export function createLocalAdmin(email: string, password: string, displayName?: 
   db.run(
     `INSERT INTO users (email, oauth_provider, oauth_id, display_name, password_hash, is_admin, last_login)
      VALUES (?, 'local', '', ?, ?, 1, datetime('now'))`,
-    [email, displayName || null, passwordHash]
+    [email, displayName || null, passwordHash],
   );
   saveDatabase();
   return getUserByEmail(email)!;
@@ -140,7 +140,9 @@ export function getUserByOAuth(oauthProvider: string, oauthId: string): UserRow 
 /**
  * Get all users with their app counts and database usage metadata.
  */
-export function getAllUsersWithMeta(): Array<UserRow & { app_count: number; branch_count: number; commit_count: number }> {
+export function getAllUsersWithMeta(): Array<
+  UserRow & { app_count: number; branch_count: number; commit_count: number }
+> {
   const db = getDatabase();
   const stmt = db.prepare(`
     SELECT u.*,
@@ -150,7 +152,8 @@ export function getAllUsersWithMeta(): Array<UserRow & { app_count: number; bran
     FROM users u
     ORDER BY u.created_at DESC
   `);
-  const rows: Array<UserRow & { app_count: number; branch_count: number; commit_count: number }> = [];
+  const rows: Array<UserRow & { app_count: number; branch_count: number; commit_count: number }> =
+    [];
   while (stmt.step()) {
     const raw = stmt.getAsObject();
     rows.push({
@@ -169,7 +172,10 @@ export function getAllUsersWithMeta(): Array<UserRow & { app_count: number; bran
  */
 export function restrictUser(userId: number, reason: string): void {
   const db = getDatabase();
-  db.run(`UPDATE users SET is_restricted = 1, restriction_reason = ? WHERE id = ?`, [reason, userId]);
+  db.run(`UPDATE users SET is_restricted = 1, restriction_reason = ? WHERE id = ?`, [
+    reason,
+    userId,
+  ]);
   saveDatabase();
 }
 

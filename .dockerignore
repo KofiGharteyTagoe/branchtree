@@ -1,0 +1,14 @@
+node_modules
+.git
+data/
+*.sqlite
+.env
+.env.*
+!.env.example
+dist/
+backend/dist/
+frontend/dist/
+*.md
+LICENSE
+.vscode/
+.idea/

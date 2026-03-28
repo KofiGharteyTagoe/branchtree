@@ -10,7 +10,11 @@ import type { ApiBranch } from '../types/api.types.js';
 export const branchesRouter = Router();
 
 function safeJsonParse(json: string, fallback: unknown = {}): unknown {
-  try { return JSON.parse(json); } catch { return fallback; }
+  try {
+    return JSON.parse(json);
+  } catch {
+    return fallback;
+  }
 }
 
 // GET /api/apps/:appId/branches — List all branches with metadata
@@ -79,5 +83,5 @@ branchesRouter.get(
         providerMetadata: safeJsonParse(c.provider_metadata) as Record<string, unknown>,
       })),
     });
-  }
+  },
 );

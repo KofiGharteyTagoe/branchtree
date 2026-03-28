@@ -1,4 +1,27 @@
 import type { Database } from 'sql.js';
+import { logger } from '../utils/logger.js';
+
+function safeAlter(db: Database, sql: string): void {
+  try {
+    db.run(sql);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (!msg.includes('duplicate column') && !msg.includes('already exists')) {
+      logger.warn({ err: msg, sql }, 'Migration warning');
+    }
+  }
+}
+
+function safeRun(db: Database, sql: string): void {
+  try {
+    db.run(sql);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (!msg.includes('already') && !msg.includes('no such column')) {
+      logger.warn({ err: msg }, 'Migration data migration warning');
+    }
+  }
+}
 
 export function initializeDatabase(db: Database): void {
   // Settings table — key/value store for all app configuration
@@ -111,6 +134,28 @@ export function initializeDatabase(db: Database): void {
   db.run(`CREATE INDEX IF NOT EXISTS idx_feedback_user_id ON feedback(user_id)`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_feedback_status ON feedback(status)`);
 
+  // Additional performance indexes
+  db.run(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_apps_owner_id ON apps(owner_id)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_commits_author_email ON commits(author_email)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_commits_commit_date ON commits(commit_date)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_branches_app_name ON branches(app_id, name)`);
+
+  // Audit log table
+  db.run(`
+    CREATE TABLE IF NOT EXISTS audit_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      action TEXT NOT NULL,
+      target_type TEXT,
+      target_id TEXT,
+      details TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_audit_log_user_id ON audit_log(user_id)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_audit_log_created_at ON audit_log(created_at)`);
+
   // Migrations for existing databases — safe to run multiple times (ALTER TABLE IF NOT EXISTS)
   migrateToProviderSchema(db);
   migrateUserSchema(db);
@@ -122,49 +167,43 @@ export function initializeDatabase(db: Database): void {
  * Uses try/catch because SQLite doesn't support IF NOT EXISTS for ALTER TABLE.
  */
 function migrateToProviderSchema(db: Database): void {
-  // Add owner_id to apps (multi-tenancy)
-  try { db.run(`ALTER TABLE apps ADD COLUMN owner_id INTEGER REFERENCES users(id)`); } catch { /* column already exists */ }
+  safeAlter(db, `ALTER TABLE apps ADD COLUMN owner_id INTEGER REFERENCES users(id)`);
+  safeAlter(db, `ALTER TABLE apps ADD COLUMN provider_type TEXT NOT NULL DEFAULT 'mendix'`);
+  safeAlter(db, `ALTER TABLE branches ADD COLUMN provider_metadata TEXT DEFAULT '{}'`);
 
-  // Add provider_type to apps
-  try { db.run(`ALTER TABLE apps ADD COLUMN provider_type TEXT NOT NULL DEFAULT 'mendix'`); } catch { /* column already exists */ }
+  safeRun(
+    db,
+    `
+    UPDATE branches
+    SET provider_metadata = json_object('mendixVersion', mendix_version)
+    WHERE mendix_version IS NOT NULL AND provider_metadata = '{}'
+  `,
+  );
 
-  // Add provider_metadata to branches (replacing mendix_version)
-  try { db.run(`ALTER TABLE branches ADD COLUMN provider_metadata TEXT DEFAULT '{}'`); } catch { /* column already exists */ }
+  safeAlter(db, `ALTER TABLE commits ADD COLUMN provider_metadata TEXT DEFAULT '{}'`);
 
-  // Migrate mendix_version data to provider_metadata in branches
-  try {
-    db.run(`
-      UPDATE branches
-      SET provider_metadata = json_object('mendixVersion', mendix_version)
-      WHERE mendix_version IS NOT NULL AND provider_metadata = '{}'
-    `);
-  } catch { /* json_object may not be available or data already migrated */ }
-
-  // Add provider_metadata to commits (replacing mendix_version + related_stories)
-  try { db.run(`ALTER TABLE commits ADD COLUMN provider_metadata TEXT DEFAULT '{}'`); } catch { /* column already exists */ }
-
-  // Migrate mendix_version and related_stories to provider_metadata in commits
-  try {
-    db.run(`
-      UPDATE commits
-      SET provider_metadata = json_object('mendixVersion', mendix_version, 'relatedStories', json(related_stories))
-      WHERE mendix_version IS NOT NULL AND provider_metadata = '{}'
-    `);
-  } catch { /* json functions may not be available or data already migrated */ }
+  safeRun(
+    db,
+    `
+    UPDATE commits
+    SET provider_metadata = json_object('mendixVersion', mendix_version, 'relatedStories', json(related_stories))
+    WHERE mendix_version IS NOT NULL AND provider_metadata = '{}'
+  `,
+  );
 }
 
 /**
  * Add admin and local-auth columns to users table.
  */
 function migrateUserSchema(db: Database): void {
-  try { db.run(`ALTER TABLE users ADD COLUMN password_hash TEXT`); } catch { /* exists */ }
-  try { db.run(`ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0`); } catch { /* exists */ }
+  safeAlter(db, `ALTER TABLE users ADD COLUMN password_hash TEXT`);
+  safeAlter(db, `ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0`);
 }
 
 /**
  * Add restriction columns to users table.
  */
 function migrateUserRestrictions(db: Database): void {
-  try { db.run(`ALTER TABLE users ADD COLUMN is_restricted INTEGER NOT NULL DEFAULT 0`); } catch { /* exists */ }
-  try { db.run(`ALTER TABLE users ADD COLUMN restriction_reason TEXT`); } catch { /* exists */ }
+  safeAlter(db, `ALTER TABLE users ADD COLUMN is_restricted INTEGER NOT NULL DEFAULT 0`);
+  safeAlter(db, `ALTER TABLE users ADD COLUMN restriction_reason TEXT`);
 }

@@ -7,7 +7,11 @@ import * as branchModel from '../models/branch.model.js';
 export const graphRouter = Router();
 
 function safeJsonParse(json: string, fallback: unknown = {}): unknown {
-  try { return JSON.parse(json); } catch { return fallback; }
+  try {
+    return JSON.parse(json);
+  } catch {
+    return fallback;
+  }
 }
 
 function mapBranch(b: ReturnType<typeof branchModel.getBranches>[number]) {
@@ -55,7 +59,9 @@ graphRouter.get('/apps/:appId/graph', validateAppId, authorizeAppOwner, (req, re
   const since = req.query.since as string | undefined;
   const until = req.query.until as string | undefined;
   const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : undefined;
-  const activeSince = req.query.activeSince ? parseInt(req.query.activeSince as string, 10) : undefined;
+  const activeSince = req.query.activeSince
+    ? parseInt(req.query.activeSince as string, 10)
+    : undefined;
 
   // Get commits (paginated or full)
   const hasPagination = since || until || limit;
@@ -100,7 +106,7 @@ graphRouter.get('/apps/:appId/graph', validateAppId, authorizeAppOwner, (req, re
     branches = branches.filter(
       (b) =>
         protectedTypes.has(b.branch_type || '') ||
-        (b.latest_commit_date && b.latest_commit_date >= cutoffStr)
+        (b.latest_commit_date && b.latest_commit_date >= cutoffStr),
     );
   }
 

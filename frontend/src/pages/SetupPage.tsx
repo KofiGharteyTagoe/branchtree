@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import { GitBranch, Shield } from 'lucide-react';
-import { storeToken } from '../context/AuthContext';
-
 const API_BASE = '/api';
 
 export default function SetupPage() {
@@ -31,6 +29,7 @@ export default function SetupPage() {
       const res = await fetch(`${API_BASE}/setup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ setupToken, email, password, displayName }),
       });
 
@@ -41,8 +40,7 @@ export default function SetupPage() {
         return;
       }
 
-      // Store the JWT and redirect
-      storeToken(data.token);
+      // Cookie is set by the server — just redirect
       window.location.href = '/';
     } catch {
       setError('Failed to connect to server');
@@ -80,7 +78,10 @@ export default function SetupPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="setupToken" className="block text-sm font-medium text-surface-700 mb-1">
+              <label
+                htmlFor="setupToken"
+                className="block text-sm font-medium text-surface-700 mb-1"
+              >
                 Setup Token
               </label>
               <input
@@ -95,7 +96,10 @@ export default function SetupPage() {
             </div>
 
             <div>
-              <label htmlFor="displayName" className="block text-sm font-medium text-surface-700 mb-1">
+              <label
+                htmlFor="displayName"
+                className="block text-sm font-medium text-surface-700 mb-1"
+              >
                 Display Name
               </label>
               <input
@@ -139,7 +143,10 @@ export default function SetupPage() {
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-surface-700 mb-1">
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm font-medium text-surface-700 mb-1"
+              >
                 Confirm Password
               </label>
               <input

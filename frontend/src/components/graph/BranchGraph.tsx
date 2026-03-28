@@ -131,7 +131,7 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
       const ancestors = ancestrySets.get(hoveredCommit);
       return ancestors?.has(commitHash) ?? false;
     },
-    [hoveredCommit, ancestrySets]
+    [hoveredCommit, ancestrySets],
   );
 
   const svgWidth = PADDING_LEFT + data.branches.length * LANE_WIDTH + LABEL_AREA_RIGHT;
@@ -176,7 +176,13 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
             </filter>
             {/* Glow for hovered nodes */}
             <filter id="nodeGlow" x="-100%" y="-100%" width="300%" height="300%">
-              <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#4F46E5" floodOpacity="0.3" />
+              <feDropShadow
+                dx="0"
+                dy="0"
+                stdDeviation="4"
+                floodColor="#4F46E5"
+                floodOpacity="0.3"
+              />
             </filter>
           </defs>
 
@@ -184,7 +190,8 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
           {data.branches.map((branch) => {
             const lane = branchLanes.get(branch.name) ?? 0;
             const x = PADDING_LEFT + lane * LANE_WIDTH;
-            const color = BRANCH_COLORS_LIGHT[branch.type || 'unknown'] || BRANCH_COLORS_LIGHT.unknown;
+            const color =
+              BRANCH_COLORS_LIGHT[branch.type || 'unknown'] || BRANCH_COLORS_LIGHT.unknown;
             const isMain = branch.type === 'main';
 
             return (
@@ -206,9 +213,8 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
             const lane = branchLanes.get(branch.name) ?? 0;
             const x = PADDING_LEFT + lane * LANE_WIDTH;
             const color = BRANCH_COLORS[branch.type || 'unknown'] || BRANCH_COLORS.unknown;
-            const displayName = branch.name.length > 16
-              ? branch.name.substring(0, 15) + '..'
-              : branch.name;
+            const displayName =
+              branch.name.length > 16 ? branch.name.substring(0, 15) + '..' : branch.name;
             const pillWidth = Math.max(60, Math.min(120, displayName.length * 7.5 + 16));
 
             return (
@@ -251,12 +257,12 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
               const to = commitPositions.get(commit.hash);
               if (!from || !to) return null;
 
-              const isMergeLine = commit.parentHashes.length > 1 &&
-                parentHash !== commit.parentHashes[0];
+              const isMergeLine =
+                commit.parentHashes.length > 1 && parentHash !== commit.parentHashes[0];
 
               const branchType = to.branch?.type || 'unknown';
               const isMain = branchType === 'main';
-              const edgeColor = isMergeLine ? '#D97706' : (BRANCH_COLORS[branchType] || '#6B7280');
+              const edgeColor = isMergeLine ? '#D97706' : BRANCH_COLORS[branchType] || '#6B7280';
 
               // Lineage dimming
               const inAncestry = isInAncestry(commit.hash) && isInAncestry(parentHash);
@@ -268,14 +274,14 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
                   d={edgePath(from.x, from.y, to.x, to.y)}
                   fill="none"
                   stroke={edgeColor}
-                  strokeWidth={isMergeLine ? 2.5 : (isMain ? 3.5 : 2.5)}
-                  strokeOpacity={dimmed ? 0.08 : (isMergeLine ? 0.6 : (isMain ? 0.7 : 0.5))}
+                  strokeWidth={isMergeLine ? 2.5 : isMain ? 3.5 : 2.5}
+                  strokeOpacity={dimmed ? 0.08 : isMergeLine ? 0.6 : isMain ? 0.7 : 0.5}
                   strokeDasharray={isMergeLine ? '8,5' : undefined}
                   strokeLinecap="round"
                   style={{ transition: 'stroke-opacity 0.2s' }}
                 />
               );
-            })
+            }),
           )}
 
           {/* Commit nodes */}
@@ -305,13 +311,7 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
               >
                 {/* Outer glow ring on hover */}
                 {isHovered && (
-                  <circle
-                    cx={pos.x}
-                    cy={pos.y}
-                    r={radius + 6}
-                    fill={color}
-                    opacity={0.15}
-                  />
+                  <circle cx={pos.x} cy={pos.y} r={radius + 6} fill={color} opacity={0.15} />
                 )}
 
                 {/* Node circle */}
@@ -327,14 +327,7 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
                 />
 
                 {/* Inner dot for merge commits */}
-                {isMerge && (
-                  <circle
-                    cx={pos.x}
-                    cy={pos.y}
-                    r={3}
-                    fill="white"
-                  />
-                )}
+                {isMerge && <circle cx={pos.x} cy={pos.y} r={3} fill="white" />}
 
                 {/* Commit message label */}
                 <text
@@ -393,9 +386,7 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
                   </p>
                   <p>
                     <span className="text-gray-500">Date:</span>{' '}
-                    {tooltipCommit.date
-                      ? new Date(tooltipCommit.date).toLocaleString()
-                      : 'Unknown'}
+                    {tooltipCommit.date ? new Date(tooltipCommit.date).toLocaleString() : 'Unknown'}
                   </p>
                   <p>
                     <span className="text-gray-500">Hash:</span>{' '}
@@ -406,8 +397,7 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
                   )}
                   {tooltipPos.branch && (
                     <p>
-                      <span className="text-gray-500">Branch:</span>{' '}
-                      {tooltipPos.branch.name}
+                      <span className="text-gray-500">Branch:</span> {tooltipPos.branch.name}
                     </p>
                   )}
                 </div>

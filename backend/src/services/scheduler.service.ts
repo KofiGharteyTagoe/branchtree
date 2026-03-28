@@ -2,6 +2,7 @@ import cron from 'node-cron';
 import { getSyncIntervalMinutes } from '../config/runtimeConfig.js';
 import * as appModel from '../models/app.model.js';
 import { syncApp } from './ingestion.service.js';
+import { logger } from '../utils/logger.js';
 
 let scheduledTask: cron.ScheduledTask | null = null;
 
@@ -16,11 +17,11 @@ export function startScheduler(): void {
   const cronExpression = `*/${minutes} * * * *`;
 
   scheduledTask = cron.schedule(cronExpression, async () => {
-    console.log('Scheduled sync starting...');
+    logger.info('Scheduled sync starting...');
     await syncAllApps();
   });
 
-  console.log(`Scheduler started: syncing every ${minutes} minutes`);
+  logger.info(`Scheduler started: syncing every ${minutes} minutes`);
 }
 
 /**
@@ -30,7 +31,7 @@ export function stopScheduler(): void {
   if (scheduledTask) {
     scheduledTask.stop();
     scheduledTask = null;
-    console.log('Scheduler stopped');
+    logger.info('Scheduler stopped');
   }
 }
 
@@ -40,7 +41,7 @@ export function stopScheduler(): void {
 async function syncAllApps(): Promise<void> {
   const apps = appModel.getApps();
   if (apps.length === 0) {
-    console.log('No apps registered, skipping scheduled sync');
+    logger.info('No apps registered, skipping scheduled sync');
     return;
   }
 
@@ -48,7 +49,7 @@ async function syncAllApps(): Promise<void> {
     try {
       await syncApp(app.app_id);
     } catch (err) {
-      console.error(`Scheduled sync failed for app ${app.app_id}:`, err);
+      logger.error({ err }, `Scheduled sync failed for app ${app.app_id}`);
     }
   }
 }

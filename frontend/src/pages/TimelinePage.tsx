@@ -38,10 +38,7 @@ export default function TimelinePage({ appId }: TimelinePageProps) {
         </p>
       </div>
 
-      <TimelineChart
-        branches={branches}
-        onBranchClick={(branch) => setSelectedBranch(branch)}
-      />
+      <TimelineChart branches={branches} onBranchClick={(branch) => setSelectedBranch(branch)} />
 
       {selectedBranch && (
         <BranchDetailPanel

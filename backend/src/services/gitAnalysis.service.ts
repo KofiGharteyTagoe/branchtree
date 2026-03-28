@@ -4,10 +4,7 @@ import type { BranchAnalysis, BranchType } from '../types/git.types.js';
 /**
  * Get the fork point where a branch diverged from main.
  */
-export async function getForkPoint(
-  repoPath: string,
-  branchName: string
-): Promise<string | null> {
+export async function getForkPoint(repoPath: string, branchName: string): Promise<string | null> {
   const git = simpleGit(repoPath);
   try {
     const result = await git.raw(['merge-base', 'main', branchName]);
@@ -22,17 +19,17 @@ export async function getForkPoint(
  */
 export async function getDivergence(
   repoPath: string,
-  branchName: string
+  branchName: string,
 ): Promise<{ ahead: number; behind: number }> {
   const git = simpleGit(repoPath);
   try {
     const ahead = parseInt(
       (await git.raw(['rev-list', '--count', `main..${branchName}`])).trim(),
-      10
+      10,
     );
     const behind = parseInt(
       (await git.raw(['rev-list', '--count', `${branchName}..main`])).trim(),
-      10
+      10,
     );
     return { ahead: ahead || 0, behind: behind || 0 };
   } catch {
@@ -43,10 +40,7 @@ export async function getDivergence(
 /**
  * Check if a branch has been merged into main.
  */
-export async function isBranchMerged(
-  repoPath: string,
-  branchName: string
-): Promise<boolean> {
+export async function isBranchMerged(repoPath: string, branchName: string): Promise<boolean> {
   const git = simpleGit(repoPath);
   try {
     const containing = await git.raw(['branch', '-a', '--contains', branchName]);
@@ -62,7 +56,7 @@ export async function isBranchMerged(
 export async function getFirstUniqueCommit(
   repoPath: string,
   forkPoint: string,
-  branchName: string
+  branchName: string,
 ): Promise<{ hash: string; author: string; date: string } | null> {
   const git = simpleGit(repoPath);
   try {
@@ -117,10 +111,7 @@ export function classifyBranch(name: string): BranchType {
 /**
  * Perform full analysis of a single branch.
  */
-export async function analyzeBranch(
-  repoPath: string,
-  branchName: string
-): Promise<BranchAnalysis> {
+export async function analyzeBranch(repoPath: string, branchName: string): Promise<BranchAnalysis> {
   const forkPointCommit = await getForkPoint(repoPath, branchName);
   const divergence = await getDivergence(repoPath, branchName);
   const merged = await isBranchMerged(repoPath, branchName);

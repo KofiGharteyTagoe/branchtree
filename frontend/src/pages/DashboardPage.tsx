@@ -1,5 +1,14 @@
 import { useState } from 'react';
-import { GitBranch, Activity, AlertTriangle, GitMerge, Zap, TrendingUp, Shield, HelpCircle } from 'lucide-react';
+import {
+  GitBranch,
+  Activity,
+  AlertTriangle,
+  GitMerge,
+  Zap,
+  TrendingUp,
+  Shield,
+  HelpCircle,
+} from 'lucide-react';
 import { useBranches } from '../hooks/useBranches';
 import AlertBanner from '../components/alerts/AlertBanner';
 import LoadingSpinner from '../components/common/LoadingSpinner';
@@ -84,7 +93,10 @@ function InfoTooltip({ text }: { text: string }) {
   return (
     <div className="relative">
       <button
-        onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen(!open);
+        }}
         className="p-0.5 text-gray-300 hover:text-gray-500 transition-colors"
         aria-label="More info"
       >
@@ -132,7 +144,9 @@ function StatWidget({
           </div>
           <p className="text-3xl font-bold text-gray-900">{value}</p>
         </div>
-        <div className={`w-11 h-11 rounded-xl ${bgAccent} flex items-center justify-center transition-transform duration-200 group-hover:scale-110`}>
+        <div
+          className={`w-11 h-11 rounded-xl ${bgAccent} flex items-center justify-center transition-transform duration-200 group-hover:scale-110`}
+        >
           <Icon className={`w-5 h-5 ${textColor}`} />
         </div>
       </div>
@@ -160,18 +174,40 @@ function HealthScoreCard({ branches, alerts }: { branches: Branch[]; alerts: Ale
   score -= diverged * 3;
   score = Math.max(Math.round(score), 0);
 
-  const scoreColor = score >= 80 ? 'text-emerald-500' : score >= 50 ? 'text-amber-500' : 'text-red-500';
-  const ringColor = score >= 80 ? 'stroke-emerald-500' : score >= 50 ? 'stroke-amber-500' : 'stroke-red-500';
-  const bgGlow = score >= 80 ? 'from-emerald-500/5 to-transparent' : score >= 50 ? 'from-amber-500/5 to-transparent' : 'from-red-500/5 to-transparent';
+  const scoreColor =
+    score >= 80 ? 'text-emerald-500' : score >= 50 ? 'text-amber-500' : 'text-red-500';
+  const ringColor =
+    score >= 80 ? 'stroke-emerald-500' : score >= 50 ? 'stroke-amber-500' : 'stroke-red-500';
+  const bgGlow =
+    score >= 80
+      ? 'from-emerald-500/5 to-transparent'
+      : score >= 50
+        ? 'from-amber-500/5 to-transparent'
+        : 'from-red-500/5 to-transparent';
 
   const circumference = 2 * Math.PI * 54;
   const dashOffset = circumference - (score / 100) * circumference;
 
   // Build breakdown
   const factors: { label: string; impact: string; bad: boolean }[] = [];
-  if (stale > 0) factors.push({ label: `${stale} stale branch${stale > 1 ? 'es' : ''}`, impact: `-${Math.round((stale / total) * 30)} pts`, bad: true });
-  if (errors > 0) factors.push({ label: `${errors} critical alert${errors > 1 ? 's' : ''}`, impact: `-${errors * 5} pts`, bad: true });
-  if (diverged > 0) factors.push({ label: `${diverged} diverged branch${diverged > 1 ? 'es' : ''}`, impact: `-${diverged * 3} pts`, bad: true });
+  if (stale > 0)
+    factors.push({
+      label: `${stale} stale branch${stale > 1 ? 'es' : ''}`,
+      impact: `-${Math.round((stale / total) * 30)} pts`,
+      bad: true,
+    });
+  if (errors > 0)
+    factors.push({
+      label: `${errors} critical alert${errors > 1 ? 's' : ''}`,
+      impact: `-${errors * 5} pts`,
+      bad: true,
+    });
+  if (diverged > 0)
+    factors.push({
+      label: `${diverged} diverged branch${diverged > 1 ? 'es' : ''}`,
+      impact: `-${diverged * 3} pts`,
+      bad: true,
+    });
   if (factors.length === 0) factors.push({ label: 'No issues found', impact: '', bad: false });
 
   return (
@@ -190,9 +226,19 @@ function HealthScoreCard({ branches, alerts }: { branches: Branch[]; alerts: Ale
           {/* Ring */}
           <div className="relative w-24 h-24 flex-shrink-0">
             <svg className="w-24 h-24 -rotate-90" viewBox="0 0 120 120">
-              <circle cx="60" cy="60" r="54" fill="none" className="stroke-surface-100" strokeWidth="8" />
               <circle
-                cx="60" cy="60" r="54" fill="none"
+                cx="60"
+                cy="60"
+                r="54"
+                fill="none"
+                className="stroke-surface-100"
+                strokeWidth="8"
+              />
+              <circle
+                cx="60"
+                cy="60"
+                r="54"
+                fill="none"
                 className={ringColor}
                 strokeWidth="8"
                 strokeLinecap="round"
@@ -236,7 +282,11 @@ function BranchTypeCard({ branches }: { branches: Branch[] }) {
     feature: { label: 'Feature', color: 'bg-branch-feature', desc: 'New features in development' },
     release: { label: 'Release', color: 'bg-branch-release', desc: 'Stabilisation before release' },
     hotfix: { label: 'Hotfix', color: 'bg-branch-hotfix', desc: 'Urgent production fixes' },
-    development: { label: 'Dev', color: 'bg-branch-development', desc: 'Shared development branch' },
+    development: {
+      label: 'Dev',
+      color: 'bg-branch-development',
+      desc: 'Shared development branch',
+    },
     unknown: { label: 'Other', color: 'bg-branch-unknown', desc: 'Uncategorised branches' },
   };
 
@@ -260,7 +310,9 @@ function BranchTypeCard({ branches }: { branches: Branch[] }) {
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-gray-600">{cfg.label}</span>
-                  <span className="text-[10px] text-gray-400 hidden group-hover:inline">{cfg.desc}</span>
+                  <span className="text-[10px] text-gray-400 hidden group-hover:inline">
+                    {cfg.desc}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold text-gray-900">{count}</span>
@@ -332,7 +384,9 @@ function AlertsSummaryCard({ alerts }: { alerts: Alert[] }) {
           <div className="mt-2 space-y-1.5 max-h-32 overflow-y-auto">
             {alerts.slice(0, 4).map((alert, i) => (
               <div key={i} className="flex items-center gap-2 text-xs text-gray-600 py-1">
-                <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${alert.severity === 'error' ? 'bg-red-400' : 'bg-amber-400'}`} />
+                <div
+                  className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${alert.severity === 'error' ? 'bg-red-400' : 'bg-amber-400'}`}
+                />
                 <span className="font-medium text-gray-700">{alert.branchName}</span>
                 <span className="truncate">{alert.message}</span>
               </div>

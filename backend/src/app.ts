@@ -1,16 +1,24 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import { corsOptions } from './config/cors.js';
+import { requestId } from './middleware/requestId.js';
 import { requestLogger } from './middleware/requestLogger.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { apiRouter } from './routes/index.js';
 
 export const app = express();
 
+// Security headers
+app.use(helmet({ contentSecurityPolicy: false }));
+
 // Middleware
 app.use(cors(corsOptions));
-app.use(express.json());
+app.use(cookieParser());
+app.use(express.json({ limit: '1mb' }));
+app.use(requestId);
 app.use(requestLogger);
 
 // Rate limiting
@@ -36,6 +44,12 @@ const syncLimiter = rateLimit({
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   message: { error: 'Sync rate limit exceeded, please wait before syncing again' },
+});
+
+// Request timeout (30s default)
+app.use((req, _res, next) => {
+  req.setTimeout(30_000);
+  next();
 });
 
 app.use('/api', globalLimiter);

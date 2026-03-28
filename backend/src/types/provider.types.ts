@@ -33,7 +33,11 @@ export interface GitProvider {
   /**
    * (Optional) Enrich commits with provider-specific metadata.
    */
-  enrichCommits?(appId: string, branchName: string, credentials: string): Promise<ProviderCommitMetadata[]>;
+  enrichCommits?(
+    appId: string,
+    branchName: string,
+    credentials: string,
+  ): Promise<ProviderCommitMetadata[]>;
 }
 
 export interface ProviderBranchMetadata {

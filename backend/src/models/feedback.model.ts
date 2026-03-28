@@ -22,13 +22,13 @@ export function createFeedback(
   userId: number,
   category: string,
   title: string,
-  description: string
+  description: string,
 ): FeedbackRow {
   const db = getDatabase();
   db.run(
     `INSERT INTO feedback (user_id, category, title, description)
      VALUES (?, ?, ?, ?)`,
-    [userId, category, title, description]
+    [userId, category, title, description],
   );
   saveDatabase();
 
@@ -58,7 +58,9 @@ export function getFeedbackByUser(userId: number): FeedbackRow[] {
 /**
  * Get all feedback (admin view) with user info.
  */
-export function getAllFeedback(): Array<FeedbackRow & { user_email: string; user_display_name: string | null }> {
+export function getAllFeedback(): Array<
+  FeedbackRow & { user_email: string; user_display_name: string | null }
+> {
   const db = getDatabase();
   const stmt = db.prepare(`
     SELECT f.*, u.email as user_email, u.display_name as user_display_name
@@ -87,12 +89,12 @@ export function getAllFeedback(): Array<FeedbackRow & { user_email: string; user
 export function updateFeedback(
   feedbackId: number,
   status: string,
-  adminNotes?: string | null
+  adminNotes?: string | null,
 ): FeedbackRow | undefined {
   const db = getDatabase();
   db.run(
     `UPDATE feedback SET status = ?, admin_notes = ?, updated_at = datetime('now') WHERE id = ?`,
-    [status, adminNotes ?? null, feedbackId]
+    [status, adminNotes ?? null, feedbackId],
   );
   saveDatabase();
 

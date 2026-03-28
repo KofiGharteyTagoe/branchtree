@@ -63,10 +63,4 @@ export interface SyncResult {
   syncedAt: string;
 }
 
-export type BranchType =
-  | 'main'
-  | 'feature'
-  | 'release'
-  | 'hotfix'
-  | 'development'
-  | 'unknown';
+export type BranchType = 'main' | 'feature' | 'release' | 'hotfix' | 'development' | 'unknown';

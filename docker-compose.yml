@@ -1,0 +1,17 @@
+services:
+  branchtree:
+    build: .
+    ports:
+      - "3001:3001"
+    volumes:
+      - branchtree-data:/app/data
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - DATA_DIR=/app/data
+      - DB_PATH=/app/data/branchtree.sqlite
+      - LOG_LEVEL=info
+    restart: unless-stopped
+
+volumes:
+  branchtree-data:

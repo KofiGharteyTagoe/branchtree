@@ -2,6 +2,7 @@ import simpleGit from 'simple-git';
 import fs from 'fs';
 import path from 'path';
 import { config } from '../config/env.js';
+import { logger } from '../utils/logger.js';
 import type { GitProvider } from '../types/provider.types.js';
 
 /**
@@ -26,7 +27,7 @@ export async function cloneOrFetch(
   appId: string,
   repoUrl: string,
   credentials: string,
-  provider: GitProvider
+  provider: GitProvider,
 ): Promise<string> {
   const repoPath = getRepoPath(appId);
 
@@ -35,9 +36,7 @@ export async function cloneOrFetch(
   };
 
   // Build the authenticated URL using the provider's auth format
-  const authedUrl = credentials
-    ? provider.buildAuthUrl(repoUrl, credentials)
-    : repoUrl;
+  const authedUrl = credentials ? provider.buildAuthUrl(repoUrl, credentials) : repoUrl;
 
   if (!fs.existsSync(repoPath)) {
     const parentDir = path.dirname(repoPath);
@@ -45,21 +44,21 @@ export async function cloneOrFetch(
       fs.mkdirSync(parentDir, { recursive: true });
     }
 
-    console.log(`Cloning bare repo for app ${appId}...`);
+    logger.info(`Cloning bare repo for app ${appId}...`);
     try {
       const git = simpleGit({ baseDir: undefined }).env(gitEnv);
       await git.clone(authedUrl, repoPath, ['--bare']);
-      console.log(`Bare clone complete: ${repoPath}`);
+      logger.info(`Bare clone complete: ${repoPath}`);
     } catch (err) {
       throw sanitizeGitError(err, credentials);
     }
   } else {
-    console.log(`Fetching updates for app ${appId}...`);
+    logger.info(`Fetching updates for app ${appId}...`);
     try {
       const git = simpleGit(repoPath).env(gitEnv);
       await git.remote(['set-url', 'origin', authedUrl]);
       await git.fetch(['--all', '--prune']);
-      console.log(`Fetch complete for app ${appId}`);
+      logger.info(`Fetch complete for app ${appId}`);
     } catch (err) {
       throw sanitizeGitError(err, credentials);
     }
@@ -74,9 +73,7 @@ export async function cloneOrFetch(
 function sanitizeGitError(err: unknown, credentials: string): Error {
   if (err instanceof Error) {
     const sanitized = new Error(
-      credentials
-        ? err.message.replaceAll(credentials, '***REDACTED***')
-        : err.message
+      credentials ? err.message.replaceAll(credentials, '***REDACTED***') : err.message,
     );
     sanitized.stack = credentials
       ? err.stack?.replaceAll(credentials, '***REDACTED***')

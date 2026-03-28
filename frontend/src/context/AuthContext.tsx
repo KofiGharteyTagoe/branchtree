@@ -18,42 +18,20 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   isLoading: boolean;
   logout: () => void;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
-
-const TOKEN_KEY = 'branchtree_token';
-
-export function getStoredToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY);
-}
-
-export function storeToken(token: string): void {
-  localStorage.setItem(TOKEN_KEY, token);
-}
-
-export function clearToken(): void {
-  localStorage.removeItem(TOKEN_KEY);
-}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchUser = useCallback(async () => {
-    const token = getStoredToken();
-    if (!token) {
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      const res = await apiClient.get<AuthUser>('/auth/me', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await apiClient.get<AuthUser>('/auth/me');
       setUser(res.data);
     } catch {
-      clearToken();
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -64,8 +42,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     fetchUser();
   }, [fetchUser]);
 
-  const logout = useCallback(() => {
-    clearToken();
+  const logout = useCallback(async () => {
+    try {
+      await apiClient.post('/auth/logout');
+    } catch {
+      // Proceed with logout even if the call fails
+    }
     setUser(null);
     window.location.href = '/login';
   }, []);
@@ -77,6 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated: !!user,
         isLoading,
         logout,
+        refreshUser: fetchUser,
       }}
     >
       {children}

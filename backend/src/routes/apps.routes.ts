@@ -38,7 +38,12 @@ appsRouter.post('/apps', (req, res, next) => {
   // Validate provider type
   const provType = (providerType as string) || 'mendix';
   if (!isValidProviderType(provType)) {
-    return next(createApiError(`Invalid provider type: ${provType}. Valid types: mendix, github, gitlab, plain-git`, 400));
+    return next(
+      createApiError(
+        `Invalid provider type: ${provType}. Valid types: mendix, github, gitlab, plain-git`,
+        400,
+      ),
+    );
   }
 
   // Validate app ID format using the provider
@@ -52,7 +57,14 @@ appsRouter.post('/apps', (req, res, next) => {
     return next(createApiError('repoUrl is required for this provider type.', 400));
   }
 
-  const app = appModel.createApp(appId, pat, provType as ProviderType, appName, repoUrl, req.user!.userId);
+  const app = appModel.createApp(
+    appId,
+    pat,
+    provType as ProviderType,
+    appName,
+    repoUrl,
+    req.user!.userId,
+  );
   // Never return the PAT in the response
   res.status(201).json({
     appId: app.app_id,

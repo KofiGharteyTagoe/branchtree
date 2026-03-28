@@ -22,7 +22,9 @@ export default function DivergenceWarning({ alerts }: DivergenceWarningProps) {
       </p>
       <ul className="space-y-1 ml-6">
         {divergenceAlerts.map((alert, i) => (
-          <li key={i} className="text-xs text-amber-600 list-disc">{alert.message}</li>
+          <li key={i} className="text-xs text-amber-600 list-disc">
+            {alert.message}
+          </li>
         ))}
       </ul>
     </div>

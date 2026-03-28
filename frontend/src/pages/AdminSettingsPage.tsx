@@ -1,9 +1,28 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  Settings, Save, Eye, EyeOff, RefreshCw, Lock, ExternalLink, Info,
-  Users, MessageSquare, Shield, ShieldOff, Trash2, Search,
-  Bug, Lightbulb, Sparkles, CircleDot, X, ChevronDown,
-  AppWindow, GitBranch, Database,
+  Settings,
+  Save,
+  Eye,
+  EyeOff,
+  RefreshCw,
+  Lock,
+  ExternalLink,
+  Info,
+  Users,
+  MessageSquare,
+  Shield,
+  ShieldOff,
+  Trash2,
+  Search,
+  Bug,
+  Lightbulb,
+  Sparkles,
+  CircleDot,
+  X,
+  ChevronDown,
+  AppWindow,
+  GitBranch,
+  Database,
 } from 'lucide-react';
 import { apiClient } from '../config/api';
 
@@ -78,19 +97,24 @@ const SETTING_CATEGORIES: Record<string, { label: string; keys: string[]; help?:
 const ALL_EXPECTED_KEYS = Object.values(SETTING_CATEGORIES).flatMap((c) => c.keys);
 
 const SECRET_KEYS = new Set([
-  'jwt_secret', 'encryption_key',
-  'google_client_secret', 'microsoft_client_secret',
+  'jwt_secret',
+  'encryption_key',
+  'google_client_secret',
+  'microsoft_client_secret',
 ]);
 
 const SETTING_DESCRIPTIONS: Record<string, string> = {
-  jwt_secret: 'Secret key for signing JWT tokens. Auto-generated on first run — only change if you need to rotate.',
-  encryption_key: 'Key for encrypting PATs at rest. Auto-generated on first run — only change if you need to rotate.',
+  jwt_secret:
+    'Secret key for signing JWT tokens. Auto-generated on first run — only change if you need to rotate.',
+  encryption_key:
+    'Key for encrypting PATs at rest. Auto-generated on first run — only change if you need to rotate.',
   google_client_id: 'The Client ID from your Google Cloud OAuth 2.0 credential',
   google_client_secret: 'The Client Secret from your Google Cloud OAuth 2.0 credential',
   microsoft_client_id: 'The Application (client) ID from your Microsoft Entra ID app registration',
   microsoft_client_secret: 'A Client Secret value from your Microsoft Entra ID app registration',
   cors_origin: 'The URL where your frontend runs (e.g. http://localhost:5173)',
-  oauth_callback_url: 'The URL where your backend runs (e.g. http://localhost:3001) — used for OAuth redirect URIs',
+  oauth_callback_url:
+    'The URL where your backend runs (e.g. http://localhost:3001) — used for OAuth redirect URIs',
   frontend_url: 'The URL to redirect users to after OAuth login (usually same as CORS origin)',
   sync_interval_minutes: 'How often (in minutes) to automatically sync all registered apps',
   stale_branch_days: 'Days of inactivity before a branch is marked as stale',
@@ -156,7 +180,10 @@ function SettingsTab() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
-  const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [passwordMessage, setPasswordMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
   const [changingPassword, setChangingPassword] = useState(false);
 
   const fetchSettings = useCallback(async () => {
@@ -179,7 +206,9 @@ function SettingsTab() {
     }
   }, []);
 
-  useEffect(() => { fetchSettings(); }, [fetchSettings]);
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
 
   const handleValueChange = (key: string, value: string) => {
     setEditValues((prev) => ({ ...prev, [key]: value }));
@@ -212,7 +241,10 @@ function SettingsTab() {
       setMessage({ type: 'success', text: 'Settings saved successfully' });
       await fetchSettings();
     } catch (err) {
-      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to save settings' });
+      setMessage({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Failed to save settings',
+      });
     } finally {
       setSaving(false);
     }
@@ -237,7 +269,10 @@ function SettingsTab() {
       setNewPassword('');
       setConfirmNewPassword('');
     } catch (err) {
-      setPasswordMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to change password' });
+      setPasswordMessage({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Failed to change password',
+      });
     } finally {
       setChangingPassword(false);
     }
@@ -264,7 +299,11 @@ function SettingsTab() {
             {isSecret && <span className="ml-2 text-xs text-amber-600 font-normal">(secret)</span>}
           </label>
           {isSecret && (
-            <button type="button" onClick={() => toggleSecretVisibility(key)} className="text-surface-400 hover:text-surface-600">
+            <button
+              type="button"
+              onClick={() => toggleSecretVisibility(key)}
+              className="text-surface-400 hover:text-surface-600"
+            >
               {isRevealed ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           )}
@@ -275,7 +314,9 @@ function SettingsTab() {
           value={editValues[key] || ''}
           onChange={(e) => handleValueChange(key, e.target.value)}
           className="w-full px-3 py-2 border border-surface-200 rounded-lg text-sm text-surface-900 placeholder-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent font-mono"
-          placeholder={isSecret && existing ? 'Enter new value to update' : (SETTING_PLACEHOLDERS[key] || '')}
+          placeholder={
+            isSecret && existing ? 'Enter new value to update' : SETTING_PLACEHOLDERS[key] || ''
+          }
         />
       </div>
     );
@@ -291,13 +332,15 @@ function SettingsTab() {
 
   const categorizedKeys = new Set(ALL_EXPECTED_KEYS);
   const uncategorizedSettings = settings.filter(
-    (s) => !categorizedKeys.has(s.key) && s.key !== 'setup_complete' && s.key !== 'setup_token'
+    (s) => !categorizedKeys.has(s.key) && s.key !== 'setup_complete' && s.key !== 'setup_token',
   );
 
   return (
     <>
       {message && (
-        <div className={`mb-6 p-3 rounded-xl text-sm ${message.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
+        <div
+          className={`mb-6 p-3 rounded-xl text-sm ${message.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}
+        >
           {message.text}
         </div>
       )}
@@ -309,7 +352,9 @@ function SettingsTab() {
               <h2 className="text-lg font-semibold text-surface-900">{category.label}</h2>
               {category.help && (
                 <button
-                  onClick={() => setExpandedHelp(expandedHelp === category.help ? null : category.help!)}
+                  onClick={() =>
+                    setExpandedHelp(expandedHelp === category.help ? null : category.help!)
+                  }
                   className="flex items-center gap-1 text-xs text-brand-600 hover:text-brand-700 font-medium"
                 >
                   <Info className="w-3.5 h-3.5" />
@@ -326,36 +371,94 @@ function SettingsTab() {
                     <p className="font-semibold text-blue-800">Step 1: Open Google Cloud Console</p>
                     <p className="mt-1">
                       Go to{' '}
-                      <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" className="underline font-medium inline-flex items-center gap-1">
-                        Google Cloud Console &mdash; Credentials <ExternalLink className="w-3 h-3" />
-                      </a>
-                      {' '}and click <strong>"Create Credentials"</strong> &rarr; <strong>"OAuth client ID"</strong>.
+                      <a
+                        href="https://console.cloud.google.com/apis/credentials"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline font-medium inline-flex items-center gap-1"
+                      >
+                        Google Cloud Console &mdash; Credentials{' '}
+                        <ExternalLink className="w-3 h-3" />
+                      </a>{' '}
+                      and click <strong>"Create Credentials"</strong> &rarr;{' '}
+                      <strong>"OAuth client ID"</strong>.
                     </p>
                   </div>
                   <div>
-                    <p className="font-semibold text-blue-800">Step 2: Configure OAuth Consent Screen (if prompted)</p>
-                    <p className="mt-1">If this is your first OAuth client, set up the consent screen:</p>
+                    <p className="font-semibold text-blue-800">
+                      Step 2: Configure OAuth Consent Screen (if prompted)
+                    </p>
+                    <p className="mt-1">
+                      If this is your first OAuth client, set up the consent screen:
+                    </p>
                     <table className="mt-2 w-full text-xs border border-blue-200 rounded-lg overflow-hidden">
                       <tbody>
-                        <tr className="border-b border-blue-200"><td className="px-3 py-2 font-medium bg-blue-100 w-1/3">User type</td><td className="px-3 py-2"><strong>External</strong> (or Internal if Google Workspace org)</td></tr>
-                        <tr className="border-b border-blue-200"><td className="px-3 py-2 font-medium bg-blue-100">App name</td><td className="px-3 py-2"><strong>BranchTree</strong></td></tr>
-                        <tr className="border-b border-blue-200"><td className="px-3 py-2 font-medium bg-blue-100">User support email</td><td className="px-3 py-2">Your email address</td></tr>
-                        <tr><td className="px-3 py-2 font-medium bg-blue-100">Scopes</td><td className="px-3 py-2">Add: <strong>email</strong>, <strong>profile</strong>, <strong>openid</strong></td></tr>
+                        <tr className="border-b border-blue-200">
+                          <td className="px-3 py-2 font-medium bg-blue-100 w-1/3">User type</td>
+                          <td className="px-3 py-2">
+                            <strong>External</strong> (or Internal if Google Workspace org)
+                          </td>
+                        </tr>
+                        <tr className="border-b border-blue-200">
+                          <td className="px-3 py-2 font-medium bg-blue-100">App name</td>
+                          <td className="px-3 py-2">
+                            <strong>BranchTree</strong>
+                          </td>
+                        </tr>
+                        <tr className="border-b border-blue-200">
+                          <td className="px-3 py-2 font-medium bg-blue-100">User support email</td>
+                          <td className="px-3 py-2">Your email address</td>
+                        </tr>
+                        <tr>
+                          <td className="px-3 py-2 font-medium bg-blue-100">Scopes</td>
+                          <td className="px-3 py-2">
+                            Add: <strong>email</strong>, <strong>profile</strong>,{' '}
+                            <strong>openid</strong>
+                          </td>
+                        </tr>
                       </tbody>
                     </table>
                   </div>
                   <div>
-                    <p className="font-semibold text-blue-800">Step 3: Create the OAuth Client ID</p>
+                    <p className="font-semibold text-blue-800">
+                      Step 3: Create the OAuth Client ID
+                    </p>
                     <table className="mt-2 w-full text-xs border border-blue-200 rounded-lg overflow-hidden">
                       <tbody>
-                        <tr className="border-b border-blue-200"><td className="px-3 py-2 font-medium bg-blue-100 w-1/3">Application type</td><td className="px-3 py-2"><strong>Web application</strong></td></tr>
-                        <tr className="border-b border-blue-200"><td className="px-3 py-2 font-medium bg-blue-100">Authorised JavaScript origins</td><td className="px-3 py-2"><code className="bg-blue-100 px-1.5 py-0.5 rounded font-mono">http://localhost:5173</code></td></tr>
-                        <tr><td className="px-3 py-2 font-medium bg-blue-100">Authorised redirect URIs</td><td className="px-3 py-2"><code className="bg-blue-100 px-1.5 py-0.5 rounded font-mono">http://localhost:3001/api/auth/google/callback</code></td></tr>
+                        <tr className="border-b border-blue-200">
+                          <td className="px-3 py-2 font-medium bg-blue-100 w-1/3">
+                            Application type
+                          </td>
+                          <td className="px-3 py-2">
+                            <strong>Web application</strong>
+                          </td>
+                        </tr>
+                        <tr className="border-b border-blue-200">
+                          <td className="px-3 py-2 font-medium bg-blue-100">
+                            Authorised JavaScript origins
+                          </td>
+                          <td className="px-3 py-2">
+                            <code className="bg-blue-100 px-1.5 py-0.5 rounded font-mono">
+                              http://localhost:5173
+                            </code>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="px-3 py-2 font-medium bg-blue-100">
+                            Authorised redirect URIs
+                          </td>
+                          <td className="px-3 py-2">
+                            <code className="bg-blue-100 px-1.5 py-0.5 rounded font-mono">
+                              http://localhost:3001/api/auth/google/callback
+                            </code>
+                          </td>
+                        </tr>
                       </tbody>
                     </table>
                   </div>
                   <div className="p-2 bg-blue-100 rounded-lg text-xs">
-                    <strong>Step 4:</strong> Copy your Client ID and Client Secret from the Google dialog, paste into the fields below, then click <strong>Save Changes</strong>.
+                    <strong>Step 4:</strong> Copy your Client ID and Client Secret from the Google
+                    dialog, paste into the fields below, then click <strong>Save Changes</strong>.
                   </div>
                 </div>
               </div>
@@ -366,37 +469,66 @@ function SettingsTab() {
                 <p className="font-semibold text-base">Microsoft OAuth Setup Guide</p>
                 <div className="space-y-4 text-blue-700">
                   <div>
-                    <p className="font-semibold text-blue-800">Step 1: Register a New Application</p>
+                    <p className="font-semibold text-blue-800">
+                      Step 1: Register a New Application
+                    </p>
                     <p className="mt-1">
                       Go to{' '}
-                      <a href="https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade" target="_blank" rel="noopener noreferrer" className="underline font-medium inline-flex items-center gap-1">
-                        Microsoft Entra ID &mdash; App registrations <ExternalLink className="w-3 h-3" />
-                      </a>
-                      {' '}and click <strong>"New registration"</strong>.
+                      <a
+                        href="https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline font-medium inline-flex items-center gap-1"
+                      >
+                        Microsoft Entra ID &mdash; App registrations{' '}
+                        <ExternalLink className="w-3 h-3" />
+                      </a>{' '}
+                      and click <strong>"New registration"</strong>.
                     </p>
                     <table className="mt-2 w-full text-xs border border-blue-200 rounded-lg overflow-hidden">
                       <tbody>
-                        <tr className="border-b border-blue-200"><td className="px-3 py-2 font-medium bg-blue-100 w-1/3">Supported account types</td><td className="px-3 py-2"><strong>Accounts in any organizational directory and personal Microsoft accounts</strong></td></tr>
-                        <tr><td className="px-3 py-2 font-medium bg-blue-100">Redirect URI</td><td className="px-3 py-2">Platform: <strong>Web</strong>, URI: <code className="bg-blue-100 px-1.5 py-0.5 rounded font-mono">http://localhost:3001/api/auth/microsoft/callback</code></td></tr>
+                        <tr className="border-b border-blue-200">
+                          <td className="px-3 py-2 font-medium bg-blue-100 w-1/3">
+                            Supported account types
+                          </td>
+                          <td className="px-3 py-2">
+                            <strong>
+                              Accounts in any organizational directory and personal Microsoft
+                              accounts
+                            </strong>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="px-3 py-2 font-medium bg-blue-100">Redirect URI</td>
+                          <td className="px-3 py-2">
+                            Platform: <strong>Web</strong>, URI:{' '}
+                            <code className="bg-blue-100 px-1.5 py-0.5 rounded font-mono">
+                              http://localhost:3001/api/auth/microsoft/callback
+                            </code>
+                          </td>
+                        </tr>
                       </tbody>
                     </table>
                   </div>
                   <div>
-                    <p className="font-semibold text-blue-800">Step 2: Copy Application (Client) ID, then create a Client Secret under Certificates & secrets.</p>
+                    <p className="font-semibold text-blue-800">
+                      Step 2: Copy Application (Client) ID, then create a Client Secret under
+                      Certificates & secrets.
+                    </p>
                     <div className="mt-2 p-2 bg-amber-100 border border-amber-300 rounded-lg text-xs text-amber-800">
-                      <strong>Important:</strong> Copy the secret value immediately! Microsoft only shows it once.
+                      <strong>Important:</strong> Copy the secret value immediately! Microsoft only
+                      shows it once.
                     </div>
                   </div>
                   <div className="p-2 bg-blue-100 rounded-lg text-xs">
-                    <strong>Step 3:</strong> Paste both values below, then click <strong>Save Changes</strong>.
+                    <strong>Step 3:</strong> Paste both values below, then click{' '}
+                    <strong>Save Changes</strong>.
                   </div>
                 </div>
               </div>
             )}
 
-            <div className="space-y-4">
-              {category.keys.map((key) => renderSettingInput(key))}
-            </div>
+            <div className="space-y-4">{category.keys.map((key) => renderSettingInput(key))}</div>
           </div>
         ))}
 
@@ -427,24 +559,56 @@ function SettingsTab() {
           <h2 className="text-lg font-semibold text-surface-900">Change Admin Password</h2>
         </div>
         {passwordMessage && (
-          <div className={`mb-4 p-3 rounded-xl text-sm ${passwordMessage.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
+          <div
+            className={`mb-4 p-3 rounded-xl text-sm ${passwordMessage.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}
+          >
             {passwordMessage.text}
           </div>
         )}
         <form onSubmit={handleChangePassword} className="space-y-4 max-w-md">
           <div>
-            <label className="block text-sm font-medium text-surface-700 mb-1">Current Password</label>
-            <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="w-full px-3 py-2 border border-surface-200 rounded-lg text-sm text-surface-900 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent" required />
+            <label className="block text-sm font-medium text-surface-700 mb-1">
+              Current Password
+            </label>
+            <input
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              className="w-full px-3 py-2 border border-surface-200 rounded-lg text-sm text-surface-900 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+              required
+            />
           </div>
           <div>
-            <label className="block text-sm font-medium text-surface-700 mb-1">New Password (min. 12 characters)</label>
-            <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full px-3 py-2 border border-surface-200 rounded-lg text-sm text-surface-900 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent" minLength={12} required />
+            <label className="block text-sm font-medium text-surface-700 mb-1">
+              New Password (min. 12 characters)
+            </label>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="w-full px-3 py-2 border border-surface-200 rounded-lg text-sm text-surface-900 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+              minLength={12}
+              required
+            />
           </div>
           <div>
-            <label className="block text-sm font-medium text-surface-700 mb-1">Confirm New Password</label>
-            <input type="password" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} className="w-full px-3 py-2 border border-surface-200 rounded-lg text-sm text-surface-900 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent" minLength={12} required />
+            <label className="block text-sm font-medium text-surface-700 mb-1">
+              Confirm New Password
+            </label>
+            <input
+              type="password"
+              value={confirmNewPassword}
+              onChange={(e) => setConfirmNewPassword(e.target.value)}
+              className="w-full px-3 py-2 border border-surface-200 rounded-lg text-sm text-surface-900 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+              minLength={12}
+              required
+            />
           </div>
-          <button type="submit" disabled={changingPassword} className="flex items-center gap-2 px-6 py-3 bg-surface-800 text-white rounded-xl font-medium hover:bg-surface-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+          <button
+            type="submit"
+            disabled={changingPassword}
+            className="flex items-center gap-2 px-6 py-3 bg-surface-800 text-white rounded-xl font-medium hover:bg-surface-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             {changingPassword ? 'Changing...' : 'Change Password'}
           </button>
         </form>
@@ -459,7 +623,9 @@ function UsersTab() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [restrictModal, setRestrictModal] = useState<{ userId: number; email: string } | null>(null);
+  const [restrictModal, setRestrictModal] = useState<{ userId: number; email: string } | null>(
+    null,
+  );
   const [restrictReason, setRestrictReason] = useState('');
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -475,19 +641,26 @@ function UsersTab() {
     }
   }, []);
 
-  useEffect(() => { fetchUsers(); }, [fetchUsers]);
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const handleRestrict = async () => {
     if (!restrictModal || !restrictReason.trim()) return;
     setActionLoading(restrictModal.userId);
     try {
-      await apiClient.post(`/admin/users/${restrictModal.userId}/restrict`, { reason: restrictReason.trim() });
+      await apiClient.post(`/admin/users/${restrictModal.userId}/restrict`, {
+        reason: restrictReason.trim(),
+      });
       setMessage({ type: 'success', text: `${restrictModal.email} has been restricted` });
       setRestrictModal(null);
       setRestrictReason('');
       await fetchUsers();
     } catch (err) {
-      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to restrict user' });
+      setMessage({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Failed to restrict user',
+      });
     } finally {
       setActionLoading(null);
     }
@@ -500,21 +673,32 @@ function UsersTab() {
       setMessage({ type: 'success', text: 'Restriction removed' });
       await fetchUsers();
     } catch (err) {
-      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to unrestrict user' });
+      setMessage({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Failed to unrestrict user',
+      });
     } finally {
       setActionLoading(null);
     }
   };
 
   const handleDelete = async (userId: number, email: string) => {
-    if (!window.confirm(`Are you sure you want to delete ${email}? This will also delete all their apps, branches, and commits. This action cannot be undone.`)) return;
+    if (
+      !window.confirm(
+        `Are you sure you want to delete ${email}? This will also delete all their apps, branches, and commits. This action cannot be undone.`,
+      )
+    )
+      return;
     setActionLoading(userId);
     try {
       await apiClient.delete(`/admin/users/${userId}`);
       setMessage({ type: 'success', text: `${email} has been deleted` });
       await fetchUsers();
     } catch (err) {
-      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to delete user' });
+      setMessage({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Failed to delete user',
+      });
     } finally {
       setActionLoading(null);
     }
@@ -522,9 +706,11 @@ function UsersTab() {
 
   const filteredUsers = users.filter((u) => {
     const q = searchQuery.toLowerCase();
-    return u.email.toLowerCase().includes(q) ||
+    return (
+      u.email.toLowerCase().includes(q) ||
       (u.displayName || '').toLowerCase().includes(q) ||
-      u.oauthProvider.toLowerCase().includes(q);
+      u.oauthProvider.toLowerCase().includes(q)
+    );
   });
 
   if (loading) {
@@ -538,7 +724,9 @@ function UsersTab() {
   return (
     <>
       {message && (
-        <div className={`mb-6 p-3 rounded-xl text-sm ${message.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
+        <div
+          className={`mb-6 p-3 rounded-xl text-sm ${message.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}
+        >
           {message.text}
         </div>
       )}
@@ -550,15 +738,21 @@ function UsersTab() {
           <p className="text-xs text-surface-500 mt-1">Total Users</p>
         </div>
         <div className="bg-white rounded-2xl shadow-card p-4 text-center">
-          <p className="text-2xl font-bold text-surface-900">{users.filter((u) => u.isAdmin).length}</p>
+          <p className="text-2xl font-bold text-surface-900">
+            {users.filter((u) => u.isAdmin).length}
+          </p>
           <p className="text-xs text-surface-500 mt-1">Admins</p>
         </div>
         <div className="bg-white rounded-2xl shadow-card p-4 text-center">
-          <p className="text-2xl font-bold text-red-600">{users.filter((u) => u.isRestricted).length}</p>
+          <p className="text-2xl font-bold text-red-600">
+            {users.filter((u) => u.isRestricted).length}
+          </p>
           <p className="text-xs text-surface-500 mt-1">Restricted</p>
         </div>
         <div className="bg-white rounded-2xl shadow-card p-4 text-center">
-          <p className="text-2xl font-bold text-surface-900">{users.reduce((sum, u) => sum + u.appCount, 0)}</p>
+          <p className="text-2xl font-bold text-surface-900">
+            {users.reduce((sum, u) => sum + u.appCount, 0)}
+          </p>
           <p className="text-xs text-surface-500 mt-1">Total Apps</p>
         </div>
       </div>
@@ -586,7 +780,11 @@ function UsersTab() {
               {/* User info */}
               <div className="flex items-start gap-3 min-w-0">
                 {user.avatarUrl ? (
-                  <img src={user.avatarUrl} alt="" className="w-10 h-10 rounded-full flex-shrink-0" />
+                  <img
+                    src={user.avatarUrl}
+                    alt=""
+                    className="w-10 h-10 rounded-full flex-shrink-0"
+                  />
                 ) : (
                   <div className="w-10 h-10 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-sm font-bold flex-shrink-0">
                     {(user.displayName || user.email)[0].toUpperCase()}
@@ -598,10 +796,14 @@ function UsersTab() {
                       {user.displayName || user.email}
                     </span>
                     {user.isAdmin && (
-                      <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase bg-brand-100 text-brand-700 rounded">Admin</span>
+                      <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase bg-brand-100 text-brand-700 rounded">
+                        Admin
+                      </span>
                     )}
                     {user.isRestricted && (
-                      <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase bg-red-100 text-red-700 rounded">Restricted</span>
+                      <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase bg-red-100 text-red-700 rounded">
+                        Restricted
+                      </span>
                     )}
                   </div>
                   <p className="text-sm text-surface-500 truncate">{user.email}</p>
@@ -647,7 +849,10 @@ function UsersTab() {
                       </button>
                     ) : (
                       <button
-                        onClick={() => { setRestrictModal({ userId: user.id, email: user.email }); setRestrictReason(''); }}
+                        onClick={() => {
+                          setRestrictModal({ userId: user.id, email: user.email });
+                          setRestrictReason('');
+                        }}
                         disabled={actionLoading === user.id}
                         className="p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors disabled:opacity-50"
                         title="Restrict user"
@@ -683,14 +888,20 @@ function UsersTab() {
           <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-surface-900">Restrict User</h3>
-              <button onClick={() => setRestrictModal(null)} className="text-surface-400 hover:text-surface-600">
+              <button
+                onClick={() => setRestrictModal(null)}
+                className="text-surface-400 hover:text-surface-600"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
             <p className="text-sm text-surface-600 mb-4">
-              Restricting <strong>{restrictModal.email}</strong> will prevent them from accessing the application. They will see a message explaining their account has been restricted.
+              Restricting <strong>{restrictModal.email}</strong> will prevent them from accessing
+              the application. They will see a message explaining their account has been restricted.
             </p>
-            <label className="block text-sm font-medium text-surface-700 mb-1">Reason for restriction</label>
+            <label className="block text-sm font-medium text-surface-700 mb-1">
+              Reason for restriction
+            </label>
             <textarea
               value={restrictReason}
               onChange={(e) => setRestrictReason(e.target.value)}
@@ -742,13 +953,19 @@ function FeedbackTab() {
     }
   }, []);
 
-  useEffect(() => { fetchFeedback(); }, [fetchFeedback]);
+  useEffect(() => {
+    fetchFeedback();
+  }, [fetchFeedback]);
 
   const handleStatusChange = async (feedbackId: number, newStatus: string) => {
     setActionLoading(feedbackId);
     try {
-      const notes = editNotes[feedbackId] ?? feedback.find((f) => f.id === feedbackId)?.admin_notes ?? null;
-      await apiClient.put(`/admin/feedback/${feedbackId}`, { status: newStatus, adminNotes: notes });
+      const notes =
+        editNotes[feedbackId] ?? feedback.find((f) => f.id === feedbackId)?.admin_notes ?? null;
+      await apiClient.put(`/admin/feedback/${feedbackId}`, {
+        status: newStatus,
+        adminNotes: notes,
+      });
       setMessage({ type: 'success', text: 'Feedback updated' });
       await fetchFeedback();
     } catch (err) {
@@ -769,7 +986,10 @@ function FeedbackTab() {
       setMessage({ type: 'success', text: 'Notes saved' });
       await fetchFeedback();
     } catch (err) {
-      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to save notes' });
+      setMessage({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Failed to save notes',
+      });
     } finally {
       setActionLoading(null);
     }
@@ -789,9 +1009,8 @@ function FeedbackTab() {
     }
   };
 
-  const filtered = filterStatus === 'all'
-    ? feedback
-    : feedback.filter((f) => f.status === filterStatus);
+  const filtered =
+    filterStatus === 'all' ? feedback : feedback.filter((f) => f.status === filterStatus);
 
   const statusCounts = feedback.reduce<Record<string, number>>((acc, f) => {
     acc[f.status] = (acc[f.status] || 0) + 1;
@@ -809,7 +1028,9 @@ function FeedbackTab() {
   return (
     <>
       {message && (
-        <div className={`mb-6 p-3 rounded-xl text-sm ${message.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
+        <div
+          className={`mb-6 p-3 rounded-xl text-sm ${message.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}
+        >
           {message.text}
         </div>
       )}
@@ -829,7 +1050,9 @@ function FeedbackTab() {
             {status === 'all' ? 'All' : status.replace('_', ' ')}
             {status === 'all'
               ? ` (${feedback.length})`
-              : statusCounts[status] ? ` (${statusCounts[status]})` : ''}
+              : statusCounts[status]
+                ? ` (${statusCounts[status]})`
+                : ''}
           </button>
         ))}
       </div>
@@ -844,27 +1067,38 @@ function FeedbackTab() {
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-3 min-w-0">
-                  <div className={`p-1.5 rounded-lg mt-0.5 ${
-                    item.category === 'bug' ? 'bg-red-100 text-red-600' :
-                    item.category === 'improvement' ? 'bg-amber-100 text-amber-600' :
-                    item.category === 'feature' ? 'bg-purple-100 text-purple-600' :
-                    'bg-surface-100 text-surface-500'
-                  }`}>
+                  <div
+                    className={`p-1.5 rounded-lg mt-0.5 ${
+                      item.category === 'bug'
+                        ? 'bg-red-100 text-red-600'
+                        : item.category === 'improvement'
+                          ? 'bg-amber-100 text-amber-600'
+                          : item.category === 'feature'
+                            ? 'bg-purple-100 text-purple-600'
+                            : 'bg-surface-100 text-surface-500'
+                    }`}
+                  >
                     {CATEGORY_ICONS[item.category] || CATEGORY_ICONS.general}
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-semibold text-surface-900">{item.title}</span>
-                      <span className={`px-1.5 py-0.5 text-[10px] font-bold uppercase rounded ${STATUS_COLORS[item.status] || STATUS_COLORS.open}`}>
+                      <span
+                        className={`px-1.5 py-0.5 text-[10px] font-bold uppercase rounded ${STATUS_COLORS[item.status] || STATUS_COLORS.open}`}
+                      >
                         {item.status.replace('_', ' ')}
                       </span>
                     </div>
                     <p className="text-xs text-surface-400 mt-1">
-                      {item.user_display_name || item.user_email} &middot; {timeAgo(item.created_at)} &middot; <span className="capitalize">{item.category}</span>
+                      {item.user_display_name || item.user_email} &middot;{' '}
+                      {timeAgo(item.created_at)} &middot;{' '}
+                      <span className="capitalize">{item.category}</span>
                     </p>
                   </div>
                 </div>
-                <ChevronDown className={`w-4 h-4 text-surface-400 flex-shrink-0 transition-transform ${expandedId === item.id ? 'rotate-180' : ''}`} />
+                <ChevronDown
+                  className={`w-4 h-4 text-surface-400 flex-shrink-0 transition-transform ${expandedId === item.id ? 'rotate-180' : ''}`}
+                />
               </div>
             </button>
 
@@ -879,7 +1113,9 @@ function FeedbackTab() {
                   <p className="text-xs font-medium text-surface-500 mb-1">Admin Notes</p>
                   <textarea
                     value={editNotes[item.id] ?? item.admin_notes ?? ''}
-                    onChange={(e) => setEditNotes((prev) => ({ ...prev, [item.id]: e.target.value }))}
+                    onChange={(e) =>
+                      setEditNotes((prev) => ({ ...prev, [item.id]: e.target.value }))
+                    }
                     className="w-full px-3 py-2 border border-surface-200 rounded-lg text-sm text-surface-900 placeholder-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-none"
                     rows={2}
                     placeholder="Add notes about actions taken..."
@@ -927,7 +1163,9 @@ function FeedbackTab() {
 
         {filtered.length === 0 && (
           <div className="text-center py-12 text-surface-400 text-sm">
-            {filterStatus === 'all' ? 'No feedback submitted yet' : `No ${filterStatus.replace('_', ' ')} feedback`}
+            {filterStatus === 'all'
+              ? 'No feedback submitted yet'
+              : `No ${filterStatus.replace('_', ' ')} feedback`}
           </div>
         )}
       </div>

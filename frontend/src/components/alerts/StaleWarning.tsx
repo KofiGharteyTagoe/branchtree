@@ -22,7 +22,9 @@ export default function StaleWarning({ alerts }: StaleWarningProps) {
       </p>
       <ul className="space-y-1 ml-6">
         {staleAlerts.map((alert, i) => (
-          <li key={i} className="text-xs text-orange-600 list-disc">{alert.branchName}</li>
+          <li key={i} className="text-xs text-orange-600 list-disc">
+            {alert.branchName}
+          </li>
         ))}
       </ul>
     </div>

@@ -1,4 +1,8 @@
-import type { GitProvider, ProviderBranchMetadata, ProviderCommitMetadata } from '../types/provider.types.js';
+import type {
+  GitProvider,
+  ProviderBranchMetadata,
+  ProviderCommitMetadata,
+} from '../types/provider.types.js';
 import * as mendixApiService from '../services/mendixApi.service.js';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -33,7 +37,11 @@ export const mendixProvider: GitProvider = {
     }));
   },
 
-  async enrichCommits(appId: string, branchName: string, credentials: string): Promise<ProviderCommitMetadata[]> {
+  async enrichCommits(
+    appId: string,
+    branchName: string,
+    credentials: string,
+  ): Promise<ProviderCommitMetadata[]> {
     const mendixCommits = await mendixApiService.getBranchCommits(appId, branchName, credentials);
     return mendixCommits.map((commit) => ({
       commitHash: commit.id,

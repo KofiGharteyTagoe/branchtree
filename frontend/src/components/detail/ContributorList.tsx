@@ -17,10 +17,7 @@ export default function ContributorList({ commits }: ContributorListProps) {
   const authorCounts = new Map<string, number>();
   for (const commit of commits) {
     if (commit.authorName) {
-      authorCounts.set(
-        commit.authorName,
-        (authorCounts.get(commit.authorName) || 0) + 1
-      );
+      authorCounts.set(commit.authorName, (authorCounts.get(commit.authorName) || 0) + 1);
     }
   }
 
@@ -34,7 +31,9 @@ export default function ContributorList({ commits }: ContributorListProps) {
     <div className="space-y-2">
       {sorted.map(([name, count], i) => (
         <div key={name} className="flex items-center gap-3 py-1">
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${AVATAR_COLORS[i % AVATAR_COLORS.length]}`}>
+          <div
+            className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${AVATAR_COLORS[i % AVATAR_COLORS.length]}`}
+          >
             {name.charAt(0).toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">

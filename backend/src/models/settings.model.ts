@@ -46,7 +46,7 @@ export function setSetting(key: string, value: string, isSecret = false): void {
        value = excluded.value,
        is_secret = excluded.is_secret,
        updated_at = datetime('now')`,
-    [key, value, isSecret ? 1 : 0]
+    [key, value, isSecret ? 1 : 0],
   );
   saveDatabase();
 }
@@ -63,7 +63,12 @@ export function deleteSetting(key: string): void {
 /**
  * Get all settings. Secret values are masked in the response.
  */
-export function getAllSettings(): Array<{ key: string; value: string; isSecret: boolean; updatedAt: string }> {
+export function getAllSettings(): Array<{
+  key: string;
+  value: string;
+  isSecret: boolean;
+  updatedAt: string;
+}> {
   const db = getDatabase();
   const stmt = db.prepare('SELECT * FROM settings ORDER BY key');
   const rows: Array<{ key: string; value: string; isSecret: boolean; updatedAt: string }> = [];

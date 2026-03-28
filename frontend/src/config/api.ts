@@ -5,16 +5,8 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // Send httpOnly cookies with every request
   timeout: 60000, // 60 seconds (sync can be slow)
-});
-
-// Request interceptor — attach JWT token
-apiClient.interceptors.request.use((reqConfig) => {
-  const token = localStorage.getItem('branchtree_token');
-  if (token) {
-    reqConfig.headers.Authorization = `Bearer ${token}`;
-  }
-  return reqConfig;
 });
 
 // Response interceptor for consistent error handling
@@ -23,8 +15,7 @@ apiClient.interceptors.response.use(
   (error) => {
     // Redirect to login on 401
     if (error.response?.status === 401) {
-      localStorage.removeItem('branchtree_token');
-      if (window.location.pathname !== '/login') {
+      if (window.location.pathname !== '/login' && window.location.pathname !== '/setup') {
         window.location.href = '/login';
       }
     }
@@ -36,5 +27,5 @@ apiClient.interceptors.response.use(
       'An unexpected error occurred';
     console.error('API Error:', message);
     return Promise.reject(new Error(message));
-  }
+  },
 );

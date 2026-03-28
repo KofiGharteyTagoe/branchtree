@@ -6,12 +6,14 @@ interface StoryListProps {
 }
 
 export default function StoryList({ commits }: StoryListProps) {
-  const storyIds = [...new Set(
-    commits.flatMap((c) => {
-      const stories = c.providerMetadata?.relatedStories as string[] | undefined;
-      return stories || [];
-    })
-  )];
+  const storyIds = [
+    ...new Set(
+      commits.flatMap((c) => {
+        const stories = c.providerMetadata?.relatedStories as string[] | undefined;
+        return stories || [];
+      }),
+    ),
+  ];
 
   if (storyIds.length === 0) {
     return <p className="text-sm text-gray-400">No related stories or issues</p>;

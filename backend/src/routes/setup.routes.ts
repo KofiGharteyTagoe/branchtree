@@ -1,8 +1,9 @@
 import { Router } from 'express';
-import jwt from 'jsonwebtoken';
 import * as settings from '../models/settings.model.js';
 import * as userModel from '../models/user.model.js';
-import { getJwtSecret } from '../config/runtimeConfig.js';
+import { createJwt, setSessionCookie } from './auth.routes.js';
+import { isValidEmail, isStrongPassword } from '../utils/validation.js';
+import { logger } from '../utils/logger.js';
 
 export const setupRouter = Router();
 
@@ -10,7 +11,6 @@ export const setupRouter = Router();
 setupRouter.get('/setup/status', (_req, res) => {
   res.json({
     setupComplete: settings.isSetupComplete(),
-    hasAdmin: userModel.hasAdminUser(),
   });
 });
 
@@ -34,11 +34,15 @@ setupRouter.post('/setup', (req, res) => {
   }
 
   // Validate email and password
-  if (!email || typeof email !== 'string' || !email.includes('@')) {
+  if (!email || typeof email !== 'string' || !isValidEmail(email)) {
     return res.status(400).json({ error: 'Valid email is required' });
   }
-  if (!password || typeof password !== 'string' || password.length < 12) {
-    return res.status(400).json({ error: 'Password must be at least 12 characters' });
+  if (!password || typeof password !== 'string') {
+    return res.status(400).json({ error: 'Password is required' });
+  }
+  const passwordCheck = isStrongPassword(password);
+  if (!passwordCheck.valid) {
+    return res.status(400).json({ error: passwordCheck.reason });
   }
 
   try {
@@ -49,16 +53,12 @@ setupRouter.post('/setup', (req, res) => {
     settings.setSetting('setup_complete', 'true');
     settings.deleteSetting('setup_token');
 
-    // Issue JWT for the new admin
-    const token = jwt.sign(
-      { userId: user.id, email: user.email },
-      getJwtSecret(),
-      { expiresIn: '24h' }
-    );
+    // Issue JWT for the new admin via httpOnly cookie
+    const token = createJwt(user.id, user.email);
+    setSessionCookie(res, token);
 
     res.status(201).json({
       message: 'Admin account created successfully',
-      token,
       user: {
         id: user.id,
         email: user.email,
@@ -67,7 +67,7 @@ setupRouter.post('/setup', (req, res) => {
       },
     });
   } catch (err) {
-    console.error('Setup error:', err);
+    logger.error({ err }, 'Setup error');
     res.status(500).json({ error: 'Failed to create admin account' });
   }
 });
@@ -85,14 +85,11 @@ setupRouter.post('/auth/login', (req, res) => {
     return res.status(401).json({ error: 'Invalid email or password' });
   }
 
-  const token = jwt.sign(
-    { userId: user.id, email: user.email },
-    getJwtSecret(),
-    { expiresIn: '24h' }
-  );
+  const token = createJwt(user.id, user.email);
+  setSessionCookie(res, token);
 
   res.json({
-    token,
+    success: true,
     user: {
       id: user.id,
       email: user.email,

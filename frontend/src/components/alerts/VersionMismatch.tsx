@@ -22,7 +22,9 @@ export default function VersionMismatch({ alerts }: VersionMismatchProps) {
       </p>
       <ul className="space-y-1 ml-6">
         {versionAlerts.map((alert, i) => (
-          <li key={i} className="text-xs text-violet-600 list-disc">{alert.message}</li>
+          <li key={i} className="text-xs text-violet-600 list-disc">
+            {alert.message}
+          </li>
         ))}
       </ul>
     </div>

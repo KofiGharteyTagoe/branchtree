@@ -1,10 +1,13 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
 import * as feedbackModel from '../models/feedback.model.js';
+import { sanitizeString } from '../utils/validation.js';
 
 export const feedbackRouter = Router();
 
 const VALID_CATEGORIES = ['bug', 'improvement', 'feature', 'general'];
+const MAX_TITLE_LENGTH = 200;
+const MAX_DESCRIPTION_LENGTH = 5000;
 
 // POST /api/feedback — Submit feedback
 feedbackRouter.post('/feedback', (req: Request, res: Response) => {
@@ -17,14 +20,16 @@ feedbackRouter.post('/feedback', (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Description is required' });
   }
   if (category && !VALID_CATEGORIES.includes(category)) {
-    return res.status(400).json({ error: `Category must be one of: ${VALID_CATEGORIES.join(', ')}` });
+    return res
+      .status(400)
+      .json({ error: `Category must be one of: ${VALID_CATEGORIES.join(', ')}` });
   }
 
   const feedback = feedbackModel.createFeedback(
     req.user!.userId,
     category || 'general',
-    title.trim(),
-    description.trim()
+    sanitizeString(title, MAX_TITLE_LENGTH),
+    sanitizeString(description, MAX_DESCRIPTION_LENGTH),
   );
 
   res.status(201).json({ feedback });

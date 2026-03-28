@@ -74,11 +74,7 @@ export default function TimelineChart({ branches, onBranchClick }: TimelineChart
           </div>
 
           <div className="ml-[172px] mt-2">
-            <TimelineAxis
-              startDate={startDate}
-              endDate={endDate}
-              width={chartWidth}
-            />
+            <TimelineAxis startDate={startDate} endDate={endDate} width={chartWidth} />
           </div>
         </div>
       </div>

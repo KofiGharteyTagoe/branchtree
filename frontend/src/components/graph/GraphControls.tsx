@@ -7,12 +7,7 @@ interface GraphControlsProps {
   onReset: () => void;
 }
 
-export default function GraphControls({
-  zoom,
-  onZoomIn,
-  onZoomOut,
-  onReset,
-}: GraphControlsProps) {
+export default function GraphControls({ zoom, onZoomIn, onZoomOut, onReset }: GraphControlsProps) {
   return (
     <div className="flex items-center gap-1 bg-surface-50 rounded-xl p-1 border border-surface-200/60">
       <button

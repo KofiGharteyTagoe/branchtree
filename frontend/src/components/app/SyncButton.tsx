@@ -28,9 +28,7 @@ export default function SyncButton({ appId }: SyncButtonProps) {
         <RefreshCw className={`w-3.5 h-3.5 ${sync.isPending ? 'animate-spin' : ''}`} />
         <span className="hidden sm:inline">{sync.isPending ? 'Syncing' : 'Sync'}</span>
       </button>
-      {sync.error && (
-        <span className="text-xs text-red-500">Failed</span>
-      )}
+      {sync.error && <span className="text-xs text-red-500">Failed</span>}
     </div>
   );
 }

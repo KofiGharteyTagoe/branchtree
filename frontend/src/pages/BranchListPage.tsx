@@ -35,15 +35,14 @@ export default function BranchListPage({ appId }: BranchListPageProps) {
     <div className="space-y-5 animate-fade-in">
       <div>
         <h2 className="text-2xl font-bold text-gray-900">Branches</h2>
-        <p className="text-sm text-gray-500 mt-0.5">Browse and inspect all branches in your repository</p>
+        <p className="text-sm text-gray-500 mt-0.5">
+          Browse and inspect all branches in your repository
+        </p>
       </div>
 
       <AlertBanner alerts={alerts} />
 
-      <BranchTable
-        branches={branches}
-        onBranchClick={(branch) => setSelectedBranch(branch)}
-      />
+      <BranchTable branches={branches} onBranchClick={(branch) => setSelectedBranch(branch)} />
 
       {selectedBranch && (
         <BranchDetailPanel

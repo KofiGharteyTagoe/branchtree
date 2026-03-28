@@ -21,7 +21,7 @@ export async function registerApp(
   pat: string,
   providerType: ProviderType = 'mendix',
   appName?: string,
-  repoUrl?: string
+  repoUrl?: string,
 ): Promise<void> {
   await apiClient.post('/apps', { appId, pat, providerType, appName, repoUrl });
 }
@@ -41,12 +41,10 @@ export async function getBranches(appId: string): Promise<BranchesResponse> {
 
 export async function getBranchDetail(
   appId: string,
-  branchName: string
+  branchName: string,
 ): Promise<BranchDetailResponse> {
   const encoded = encodeURIComponent(branchName);
-  const res = await apiClient.get<BranchDetailResponse>(
-    `/apps/${appId}/branches/${encoded}`
-  );
+  const res = await apiClient.get<BranchDetailResponse>(`/apps/${appId}/branches/${encoded}`);
   return res.data;
 }
 

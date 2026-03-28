@@ -1,6 +1,16 @@
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, GitBranch, List, Clock, ArrowLeft, LogOut, Settings, MessageSquare, X } from 'lucide-react';
+import {
+  LayoutDashboard,
+  GitBranch,
+  List,
+  Clock,
+  ArrowLeft,
+  LogOut,
+  Settings,
+  MessageSquare,
+  X,
+} from 'lucide-react';
 import SyncButton from '../app/SyncButton';
 import DeleteAppButton from '../app/DeleteAppButton';
 import { useApps } from '../../hooks/useApps';
@@ -20,9 +30,21 @@ const navItems = [
 ];
 
 const FEEDBACK_CATEGORIES = [
-  { value: 'bug', label: 'Bug Report', description: 'Something is broken or not working correctly' },
-  { value: 'improvement', label: 'Improvement', description: 'Suggest an enhancement to existing functionality' },
-  { value: 'feature', label: 'Feature Request', description: 'Request a new feature or capability' },
+  {
+    value: 'bug',
+    label: 'Bug Report',
+    description: 'Something is broken or not working correctly',
+  },
+  {
+    value: 'improvement',
+    label: 'Improvement',
+    description: 'Suggest an enhancement to existing functionality',
+  },
+  {
+    value: 'feature',
+    label: 'Feature Request',
+    description: 'Request a new feature or capability',
+  },
   { value: 'general', label: 'General', description: 'Any other feedback or comments' },
 ];
 
@@ -37,7 +59,10 @@ export default function Header({ selectedAppId, onAppChange }: HeaderProps) {
   const [feedbackTitle, setFeedbackTitle] = useState('');
   const [feedbackDescription, setFeedbackDescription] = useState('');
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
-  const [feedbackMessage, setFeedbackMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [feedbackMessage, setFeedbackMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
 
   const handleBack = () => {
     onAppChange(null);
@@ -63,7 +88,10 @@ export default function Header({ selectedAppId, onAppChange }: HeaderProps) {
         setFeedbackMessage(null);
       }, 2000);
     } catch (err) {
-      setFeedbackMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to submit feedback' });
+      setFeedbackMessage({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Failed to submit feedback',
+      });
     } finally {
       setFeedbackSubmitting(false);
     }
@@ -132,10 +160,7 @@ export default function Header({ selectedAppId, onAppChange }: HeaderProps) {
             {selectedAppId && (
               <>
                 <SyncButton appId={selectedAppId} />
-                <DeleteAppButton
-                  appId={selectedAppId}
-                  onDeleted={handleBack}
-                />
+                <DeleteAppButton appId={selectedAppId} onDeleted={handleBack} />
                 <div className="w-px h-6 bg-surface-200" />
               </>
             )}
@@ -143,11 +168,7 @@ export default function Header({ selectedAppId, onAppChange }: HeaderProps) {
             {user && (
               <div className="flex items-center gap-2">
                 {user.avatarUrl ? (
-                  <img
-                    src={user.avatarUrl}
-                    alt=""
-                    className="w-7 h-7 rounded-full"
-                  />
+                  <img src={user.avatarUrl} alt="" className="w-7 h-7 rounded-full" />
                 ) : (
                   <div className="w-7 h-7 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-xs font-bold">
                     {(user.displayName || user.email)[0].toUpperCase()}
@@ -160,6 +181,7 @@ export default function Header({ selectedAppId, onAppChange }: HeaderProps) {
                   onClick={() => setShowFeedback(true)}
                   className="p-1.5 text-surface-400 hover:text-amber-500 transition-colors"
                   title="Send Feedback"
+                  aria-label="Send Feedback"
                 >
                   <MessageSquare className="w-4 h-4" />
                 </button>
@@ -168,6 +190,7 @@ export default function Header({ selectedAppId, onAppChange }: HeaderProps) {
                     onClick={() => navigate('/admin/settings')}
                     className="p-1.5 text-surface-400 hover:text-brand-600 transition-colors"
                     title="Admin Panel"
+                    aria-label="Admin Panel"
                   >
                     <Settings className="w-4 h-4" />
                   </button>
@@ -176,6 +199,7 @@ export default function Header({ selectedAppId, onAppChange }: HeaderProps) {
                   onClick={logout}
                   className="p-1.5 text-surface-400 hover:text-red-500 transition-colors"
                   title="Sign out"
+                  aria-label="Sign out"
                 >
                   <LogOut className="w-4 h-4" />
                 </button>
@@ -194,13 +218,21 @@ export default function Header({ selectedAppId, onAppChange }: HeaderProps) {
                 <MessageSquare className="w-5 h-5 text-brand-600" />
                 <h3 className="text-lg font-semibold text-surface-900">Send Feedback</h3>
               </div>
-              <button onClick={() => { setShowFeedback(false); setFeedbackMessage(null); }} className="text-surface-400 hover:text-surface-600">
+              <button
+                onClick={() => {
+                  setShowFeedback(false);
+                  setFeedbackMessage(null);
+                }}
+                className="text-surface-400 hover:text-surface-600"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {feedbackMessage && (
-              <div className={`mb-4 p-3 rounded-xl text-sm ${feedbackMessage.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
+              <div
+                className={`mb-4 p-3 rounded-xl text-sm ${feedbackMessage.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}
+              >
                 {feedbackMessage.text}
               </div>
             )}
@@ -241,7 +273,9 @@ export default function Header({ selectedAppId, onAppChange }: HeaderProps) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-surface-700 mb-1">Description</label>
+                <label className="block text-sm font-medium text-surface-700 mb-1">
+                  Description
+                </label>
                 <textarea
                   value={feedbackDescription}
                   onChange={(e) => setFeedbackDescription(e.target.value)}
@@ -255,14 +289,19 @@ export default function Header({ selectedAppId, onAppChange }: HeaderProps) {
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
-                  onClick={() => { setShowFeedback(false); setFeedbackMessage(null); }}
+                  onClick={() => {
+                    setShowFeedback(false);
+                    setFeedbackMessage(null);
+                  }}
                   className="px-4 py-2 text-sm text-surface-600 hover:bg-surface-50 rounded-lg transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={feedbackSubmitting || !feedbackTitle.trim() || !feedbackDescription.trim()}
+                  disabled={
+                    feedbackSubmitting || !feedbackTitle.trim() || !feedbackDescription.trim()
+                  }
                   className="px-4 py-2 text-sm bg-brand-600 text-white rounded-lg font-medium hover:bg-brand-700 transition-colors disabled:opacity-50"
                 >
                   {feedbackSubmitting ? 'Submitting...' : 'Submit Feedback'}

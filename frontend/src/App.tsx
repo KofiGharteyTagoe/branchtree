@@ -1,17 +1,20 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import MainLayout from './components/layout/MainLayout';
-import ProjectListPage from './pages/ProjectListPage';
-import DashboardPage from './pages/DashboardPage';
-import GraphPage from './pages/GraphPage';
-import BranchListPage from './pages/BranchListPage';
-import TimelinePage from './pages/TimelinePage';
-import LoginPage from './pages/LoginPage';
-import OAuthCallbackPage from './pages/OAuthCallbackPage';
-import SetupPage from './pages/SetupPage';
-import AdminSettingsPage from './pages/AdminSettingsPage';
-import NotFoundPage from './pages/NotFoundPage';
+import LoadingSpinner from './components/common/LoadingSpinner';
+
+// Lazy-loaded page components for code splitting
+const ProjectListPage = lazy(() => import('./pages/ProjectListPage'));
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const GraphPage = lazy(() => import('./pages/GraphPage'));
+const BranchListPage = lazy(() => import('./pages/BranchListPage'));
+const TimelinePage = lazy(() => import('./pages/TimelinePage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const OAuthCallbackPage = lazy(() => import('./pages/OAuthCallbackPage'));
+const SetupPage = lazy(() => import('./pages/SetupPage'));
+const AdminSettingsPage = lazy(() => import('./pages/AdminSettingsPage'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 function AuthenticatedApp() {
   const { isAuthenticated, isLoading, user, logout } = useAuth();
@@ -34,8 +37,18 @@ function AuthenticatedApp() {
       <div className="min-h-screen flex items-center justify-center bg-surface-50 px-4">
         <div className="bg-white rounded-2xl shadow-card p-8 max-w-md w-full text-center">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+            <svg
+              className="w-8 h-8 text-red-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+              />
             </svg>
           </div>
           <h1 className="text-xl font-bold text-surface-900 mb-2">Account Restricted</h1>
@@ -44,7 +57,9 @@ function AuthenticatedApp() {
           </p>
           {user.restrictionReason && (
             <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4">
-              <p className="text-sm text-red-700"><strong>Reason:</strong> {user.restrictionReason}</p>
+              <p className="text-sm text-red-700">
+                <strong>Reason:</strong> {user.restrictionReason}
+              </p>
             </div>
           )}
           <p className="text-xs text-surface-400 mb-6">
@@ -65,57 +80,34 @@ function AuthenticatedApp() {
     <MainLayout selectedAppId={selectedAppId} onAppChange={setSelectedAppId}>
       <Routes>
         {/* Project list — always accessible */}
-        <Route
-          path="/"
-          element={
-            <ProjectListPage onAppChange={setSelectedAppId} />
-          }
-        />
+        <Route path="/" element={<ProjectListPage onAppChange={setSelectedAppId} />} />
 
         {/* Admin settings — only for admin users */}
-        {user?.isAdmin && (
-          <Route path="/admin/settings" element={<AdminSettingsPage />} />
-        )}
+        {user?.isAdmin && <Route path="/admin/settings" element={<AdminSettingsPage />} />}
 
         {/* Project-scoped pages — require a selected project */}
         <Route
           path="/dashboard"
           element={
-            selectedAppId ? (
-              <DashboardPage appId={selectedAppId} />
-            ) : (
-              <Navigate to="/" replace />
-            )
+            selectedAppId ? <DashboardPage appId={selectedAppId} /> : <Navigate to="/" replace />
           }
         />
         <Route
           path="/graph"
           element={
-            selectedAppId ? (
-              <GraphPage appId={selectedAppId} />
-            ) : (
-              <Navigate to="/" replace />
-            )
+            selectedAppId ? <GraphPage appId={selectedAppId} /> : <Navigate to="/" replace />
           }
         />
         <Route
           path="/branches"
           element={
-            selectedAppId ? (
-              <BranchListPage appId={selectedAppId} />
-            ) : (
-              <Navigate to="/" replace />
-            )
+            selectedAppId ? <BranchListPage appId={selectedAppId} /> : <Navigate to="/" replace />
           }
         />
         <Route
           path="/timeline"
           element={
-            selectedAppId ? (
-              <TimelinePage appId={selectedAppId} />
-            ) : (
-              <Navigate to="/" replace />
-            )
+            selectedAppId ? <TimelinePage appId={selectedAppId} /> : <Navigate to="/" replace />
           }
         />
         <Route path="*" element={<NotFoundPage />} />
@@ -146,16 +138,18 @@ function AppRoutes() {
   }
 
   return (
-    <Routes>
-      <Route path="/setup" element={<SetupPage />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/auth/callback" element={<OAuthCallbackPage />} />
-      {setupRequired ? (
-        <Route path="*" element={<Navigate to="/setup" replace />} />
-      ) : (
-        <Route path="/*" element={<AuthenticatedApp />} />
-      )}
-    </Routes>
+    <Suspense fallback={<LoadingSpinner />}>
+      <Routes>
+        <Route path="/setup" element={<SetupPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/auth/callback" element={<OAuthCallbackPage />} />
+        {setupRequired ? (
+          <Route path="*" element={<Navigate to="/setup" replace />} />
+        ) : (
+          <Route path="/*" element={<AuthenticatedApp />} />
+        )}
+      </Routes>
+    </Suspense>
   );
 }
 

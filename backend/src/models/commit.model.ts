@@ -44,7 +44,7 @@ export function upsertCommits(appId: string, commits: ParsedCommit[]): void {
         JSON.stringify(commit.parentHashes),
         commit.isMergeCommit ? 1 : 0,
         commit.refs,
-      ]
+      ],
     );
   }
   saveDatabase();
@@ -52,9 +52,7 @@ export function upsertCommits(appId: string, commits: ParsedCommit[]): void {
 
 export function getCommits(appId: string): CommitRow[] {
   const db = getDatabase();
-  const stmt = db.prepare(
-    'SELECT * FROM commits WHERE app_id = ? ORDER BY commit_date DESC'
-  );
+  const stmt = db.prepare('SELECT * FROM commits WHERE app_id = ? ORDER BY commit_date DESC');
   stmt.bind([appId]);
   const rows: CommitRow[] = [];
   while (stmt.step()) {
@@ -112,10 +110,13 @@ export function getCommitCount(appId: string): number {
   return 0;
 }
 
-export function getCommitDateRange(appId: string): { oldest: string | null; newest: string | null } {
+export function getCommitDateRange(appId: string): {
+  oldest: string | null;
+  newest: string | null;
+} {
   const db = getDatabase();
   const stmt = db.prepare(
-    'SELECT MIN(commit_date) as oldest, MAX(commit_date) as newest FROM commits WHERE app_id = ?'
+    'SELECT MIN(commit_date) as oldest, MAX(commit_date) as newest FROM commits WHERE app_id = ?',
   );
   stmt.bind([appId]);
   if (stmt.step()) {
@@ -135,7 +136,7 @@ export function getCommitsByBranch(appId: string, branchName: string): CommitRow
   const stmt = db.prepare(
     `SELECT * FROM commits
      WHERE app_id = ? AND branch_names LIKE ?
-     ORDER BY commit_date DESC`
+     ORDER BY commit_date DESC`,
   );
   stmt.bind([appId, `%"${branchName}"%`]);
   const rows: CommitRow[] = [];
@@ -149,14 +150,14 @@ export function getCommitsByBranch(appId: string, branchName: string): CommitRow
 export function enrichCommit(
   appId: string,
   hash: string,
-  providerMetadata: Record<string, unknown>
+  providerMetadata: Record<string, unknown>,
 ): void {
   const db = getDatabase();
   db.run(
     `UPDATE commits
      SET provider_metadata = ?
      WHERE hash = ? AND app_id = ?`,
-    [JSON.stringify(providerMetadata), hash, appId]
+    [JSON.stringify(providerMetadata), hash, appId],
   );
   saveDatabase();
 }

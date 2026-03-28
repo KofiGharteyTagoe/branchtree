@@ -31,7 +31,7 @@ export default function MergeReadiness({ branch }: MergeReadinessProps) {
 
   if (branch.createdDate) {
     const daysSinceCreation = Math.floor(
-      (Date.now() - new Date(branch.createdDate).getTime()) / (24 * 60 * 60 * 1000)
+      (Date.now() - new Date(branch.createdDate).getTime()) / (24 * 60 * 60 * 1000),
     );
     const agePenalty = Math.min((daysSinceCreation / 60) * 10, 10);
     score -= agePenalty;
@@ -44,10 +44,28 @@ export default function MergeReadiness({ branch }: MergeReadinessProps) {
 
   const colors =
     score >= 80
-      ? { bg: 'bg-emerald-50', border: 'border-emerald-200/60', text: 'text-emerald-700', bar: 'bg-emerald-500', icon: 'text-emerald-500' }
+      ? {
+          bg: 'bg-emerald-50',
+          border: 'border-emerald-200/60',
+          text: 'text-emerald-700',
+          bar: 'bg-emerald-500',
+          icon: 'text-emerald-500',
+        }
       : score >= 50
-        ? { bg: 'bg-amber-50', border: 'border-amber-200/60', text: 'text-amber-700', bar: 'bg-amber-500', icon: 'text-amber-500' }
-        : { bg: 'bg-red-50', border: 'border-red-200/60', text: 'text-red-700', bar: 'bg-red-500', icon: 'text-red-500' };
+        ? {
+            bg: 'bg-amber-50',
+            border: 'border-amber-200/60',
+            text: 'text-amber-700',
+            bar: 'bg-amber-500',
+            icon: 'text-amber-500',
+          }
+        : {
+            bg: 'bg-red-50',
+            border: 'border-red-200/60',
+            text: 'text-red-700',
+            bar: 'bg-red-500',
+            icon: 'text-red-500',
+          };
 
   return (
     <div className={`${colors.bg} ${colors.border} border rounded-xl p-4`}>

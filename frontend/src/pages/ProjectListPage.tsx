@@ -40,7 +40,7 @@ export default function ProjectListPage({ onAppChange }: ProjectListPageProps) {
     if (!search) return true;
     const q = search.toLowerCase();
     return (
-      (app.appName?.toLowerCase().includes(q)) ||
+      app.appName?.toLowerCase().includes(q) ||
       app.appId.toLowerCase().includes(q) ||
       app.providerType.toLowerCase().includes(q)
     );
@@ -94,9 +94,7 @@ export default function ProjectListPage({ onAppChange }: ProjectListPageProps) {
       {apps.length === 0 ? (
         <EmptyProjectState onAdd={() => setShowRegistration(true)} />
       ) : filtered.length === 0 ? (
-        <div className="text-center py-12 text-sm text-gray-400">
-          No projects match "{search}"
-        </div>
+        <div className="text-center py-12 text-sm text-gray-400">No projects match "{search}"</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map((app) => (
@@ -135,12 +133,12 @@ function ProjectCard({ app, onClick }: { app: App; onClick: () => void }) {
         {app.appName || app.appId}
       </h3>
 
-      {app.appName && (
-        <p className="text-xs text-gray-400 font-mono truncate mb-3">{app.appId}</p>
-      )}
+      {app.appName && <p className="text-xs text-gray-400 font-mono truncate mb-3">{app.appId}</p>}
 
       <div className="flex items-center gap-3 mt-auto pt-3 border-t border-surface-100">
-        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-semibold ${provider.bg} ${provider.color}`}>
+        <span
+          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-semibold ${provider.bg} ${provider.color}`}
+        >
           <GitBranch className="w-3 h-3" />
           {provider.label}
         </span>
@@ -152,9 +150,7 @@ function ProjectCard({ app, onClick }: { app: App; onClick: () => void }) {
           </span>
         )}
 
-        {!app.lastSynced && (
-          <span className="text-xs text-amber-500 font-medium">Not synced</span>
-        )}
+        {!app.lastSynced && <span className="text-xs text-amber-500 font-medium">Not synced</span>}
       </div>
     </button>
   );
@@ -168,7 +164,8 @@ function EmptyProjectState({ onAdd }: { onAdd: () => void }) {
       </div>
       <h3 className="text-xl font-semibold text-gray-900 mb-2">Welcome to BranchTree</h3>
       <p className="text-sm text-gray-500 max-w-sm leading-relaxed mb-6">
-        Register your first project to start visualizing branches, tracking health, and spotting issues before they become problems.
+        Register your first project to start visualizing branches, tracking health, and spotting
+        issues before they become problems.
       </p>
       <button onClick={onAdd} className="btn-primary flex items-center gap-2">
         <Plus className="w-4 h-4" />

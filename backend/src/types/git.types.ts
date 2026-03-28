@@ -24,10 +24,4 @@ export interface BranchAnalysis {
   branchType: string;
 }
 
-export type BranchType =
-  | 'main'
-  | 'feature'
-  | 'release'
-  | 'hotfix'
-  | 'development'
-  | 'unknown';
+export type BranchType = 'main' | 'feature' | 'release' | 'hotfix' | 'development' | 'unknown';
