@@ -16,16 +16,29 @@ const BRANCH_COLORS: Record<string, string> = {
   release: '#F59E0B',
   hotfix: '#EF4444',
   development: '#8B5CF6',
-  unknown: '#6B7280',
+  unknown: '#94A3B8',
 };
 
-const LANE_WIDTH = 30;
-const COMMIT_SPACING = 40;
-const PADDING = 60;
-const DOT_RADIUS = 5;
+const BRANCH_COLORS_LIGHT: Record<string, string> = {
+  main: '#EEF2FF',
+  feature: '#ECFDF5',
+  release: '#FFFBEB',
+  hotfix: '#FEF2F2',
+  development: '#F5F3FF',
+  unknown: '#F8FAFC',
+};
+
+const LANE_WIDTH = 40;
+const COMMIT_SPACING = 50;
+const PADDING_TOP = 80;
+const PADDING_LEFT = 70;
+const PADDING_BOTTOM = 40;
+const DOT_RADIUS = 6;
+const LABEL_AREA_RIGHT = 280;
 
 export default function BranchGraph({ data, onCommitClick, onBranchClick }: BranchGraphProps) {
   const [zoom, setZoom] = useState(1);
+  const [hoveredCommit, setHoveredCommit] = useState<string | null>(null);
 
   const branchLanes = useMemo(() => {
     const lanes = new Map<string, number>();
@@ -72,21 +85,30 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
       if (!assignedBranch && commit.parentHashes.length > 0) {
         const parentPos = positions.get(commit.parentHashes[0]);
         if (parentPos) {
-          lane = (parentPos.x - PADDING) / LANE_WIDTH;
+          lane = (parentPos.x - PADDING_LEFT) / LANE_WIDTH;
           assignedBranch = parentPos.branch;
         }
       }
 
-      const x = PADDING + lane * LANE_WIDTH;
-      const y = PADDING + i * COMMIT_SPACING;
+      const x = PADDING_LEFT + lane * LANE_WIDTH;
+      const y = PADDING_TOP + i * COMMIT_SPACING;
       positions.set(commit.hash, { x, y, branch: assignedBranch });
     });
 
     return positions;
   }, [sortedCommits, branchLanes, data.branches]);
 
-  const svgWidth = PADDING * 2 + data.branches.length * LANE_WIDTH;
-  const svgHeight = PADDING * 2 + sortedCommits.length * COMMIT_SPACING;
+  const svgWidth = PADDING_LEFT + data.branches.length * LANE_WIDTH + LABEL_AREA_RIGHT;
+  const svgHeight = PADDING_TOP + sortedCommits.length * COMMIT_SPACING + PADDING_BOTTOM;
+
+  // Generate smooth bezier path between two points
+  const edgePath = (x1: number, y1: number, x2: number, y2: number) => {
+    if (x1 === x2) {
+      return `M ${x1} ${y1} L ${x2} ${y2}`;
+    }
+    const midY = (y1 + y2) / 2;
+    return `M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`;
+  };
 
   return (
     <div className="space-y-4">
@@ -100,14 +122,83 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
         />
       </div>
 
-      <div className="card-static p-0 overflow-auto" style={{ maxHeight: '70vh' }}>
+      <div className="card-static p-0 overflow-auto bg-white" style={{ maxHeight: '72vh' }}>
         <svg
           width={svgWidth * zoom}
           height={svgHeight * zoom}
           viewBox={`0 0 ${svgWidth} ${svgHeight}`}
           className="min-w-full"
         >
-          {/* Draw edges */}
+          <defs>
+            {/* Drop shadow for nodes */}
+            <filter id="nodeShadow" x="-50%" y="-50%" width="200%" height="200%">
+              <feDropShadow dx="0" dy="1" stdDeviation="2" floodColor="#000" floodOpacity="0.1" />
+            </filter>
+            {/* Glow for hovered nodes */}
+            <filter id="nodeGlow" x="-100%" y="-100%" width="300%" height="300%">
+              <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#6366F1" floodOpacity="0.3" />
+            </filter>
+          </defs>
+
+          {/* Lane backgrounds */}
+          {data.branches.map((branch) => {
+            const lane = branchLanes.get(branch.name) ?? 0;
+            const x = PADDING_LEFT + lane * LANE_WIDTH;
+            const color = BRANCH_COLORS_LIGHT[branch.type || 'unknown'] || BRANCH_COLORS_LIGHT.unknown;
+
+            return (
+              <rect
+                key={`lane-${branch.name}`}
+                x={x - LANE_WIDTH / 2 + 2}
+                y={PADDING_TOP - 20}
+                width={LANE_WIDTH - 4}
+                height={svgHeight - PADDING_TOP - PADDING_BOTTOM + 40}
+                fill={color}
+                rx={8}
+                opacity={0.6}
+              />
+            );
+          })}
+
+          {/* Branch labels at top */}
+          {data.branches.map((branch) => {
+            const lane = branchLanes.get(branch.name) ?? 0;
+            const x = PADDING_LEFT + lane * LANE_WIDTH;
+            const color = BRANCH_COLORS[branch.type || 'unknown'] || BRANCH_COLORS.unknown;
+
+            return (
+              <g
+                key={`label-${branch.name}`}
+                className="cursor-pointer"
+                onClick={() => onBranchClick?.(branch)}
+              >
+                {/* Pill background */}
+                <rect
+                  x={x - 18}
+                  y={12}
+                  width={36}
+                  height={20}
+                  rx={10}
+                  fill={color}
+                  opacity={0.12}
+                />
+                <text
+                  x={x}
+                  y={26}
+                  fontSize={8}
+                  fill={color}
+                  textAnchor="middle"
+                  fontWeight="700"
+                  fontFamily="Inter, system-ui, sans-serif"
+                  className="select-none"
+                >
+                  {branch.name.length > 8 ? branch.name.substring(0, 7) + '..' : branch.name}
+                </text>
+              </g>
+            );
+          })}
+
+          {/* Edges — smooth bezier curves */}
           {sortedCommits.map((commit) =>
             commit.parentHashes.map((parentHash) => {
               const from = commitPositions.get(parentHash);
@@ -117,91 +208,104 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
               const isMergeLine = commit.parentHashes.length > 1 &&
                 parentHash !== commit.parentHashes[0];
 
+              const branchType = to.branch?.type || 'unknown';
+              const edgeColor = isMergeLine ? '#F59E0B' : (BRANCH_COLORS[branchType] || '#94A3B8');
+
               return (
-                <line
+                <path
                   key={`${parentHash}-${commit.hash}`}
-                  x1={from.x}
-                  y1={from.y}
-                  x2={to.x}
-                  y2={to.y}
-                  stroke={isMergeLine ? '#F59E0B' : '#E2E8F0'}
-                  strokeWidth={isMergeLine ? 2 : 1.5}
-                  strokeDasharray={isMergeLine ? '4,4' : undefined}
+                  d={edgePath(from.x, from.y, to.x, to.y)}
+                  fill="none"
+                  stroke={edgeColor}
+                  strokeWidth={isMergeLine ? 2 : 2}
+                  strokeOpacity={isMergeLine ? 0.5 : 0.35}
+                  strokeDasharray={isMergeLine ? '6,4' : undefined}
+                  strokeLinecap="round"
                 />
               );
             })
           )}
 
-          {/* Draw commit dots */}
+          {/* Commit nodes */}
           {sortedCommits.map((commit) => {
             const pos = commitPositions.get(commit.hash);
             if (!pos) return null;
 
             const branchType = pos.branch?.type || 'unknown';
             const color = BRANCH_COLORS[branchType] || BRANCH_COLORS.unknown;
+            const isHovered = hoveredCommit === commit.hash;
+            const isMerge = commit.isMergeCommit;
+            const radius = isMerge ? DOT_RADIUS + 2 : DOT_RADIUS;
 
             return (
               <g
                 key={commit.hash}
                 className="cursor-pointer"
                 onClick={() => onCommitClick?.(commit)}
+                onMouseEnter={() => setHoveredCommit(commit.hash)}
+                onMouseLeave={() => setHoveredCommit(null)}
               >
+                {/* Outer glow ring on hover */}
+                {isHovered && (
+                  <circle
+                    cx={pos.x}
+                    cy={pos.y}
+                    r={radius + 6}
+                    fill={color}
+                    opacity={0.12}
+                  />
+                )}
+
+                {/* Node circle */}
                 <circle
                   cx={pos.x}
                   cy={pos.y}
-                  r={commit.isMergeCommit ? DOT_RADIUS + 2 : DOT_RADIUS}
-                  fill={commit.isMergeCommit ? '#F59E0B' : color}
+                  r={radius}
+                  fill={isMerge ? '#F59E0B' : color}
                   stroke="white"
-                  strokeWidth={2}
+                  strokeWidth={2.5}
+                  filter="url(#nodeShadow)"
+                  style={{ transition: 'r 0.15s ease-out' }}
                 />
+
+                {/* Inner dot for merge commits */}
+                {isMerge && (
+                  <circle
+                    cx={pos.x}
+                    cy={pos.y}
+                    r={2.5}
+                    fill="white"
+                  />
+                )}
+
+                {/* Commit message label */}
                 <text
-                  x={pos.x + 15}
-                  y={pos.y + 4}
-                  fontSize={10}
-                  fill="#94A3B8"
-                  className="select-none"
+                  x={pos.x + 18}
+                  y={pos.y - 4}
+                  fontSize={11}
+                  fill={isHovered ? '#1E293B' : '#94A3B8'}
+                  fontWeight={isHovered ? '600' : '400'}
                   fontFamily="Inter, system-ui, sans-serif"
+                  className="select-none"
+                  style={{ transition: 'fill 0.15s, font-weight 0.15s' }}
                 >
-                  {commit.message?.substring(0, 40)}
-                  {(commit.message?.length || 0) > 40 ? '...' : ''}
+                  {commit.message?.substring(0, 45)}
+                  {(commit.message?.length || 0) > 45 ? '...' : ''}
                 </text>
-              </g>
-            );
-          })}
 
-          {/* Draw branch labels */}
-          {data.branches.map((branch) => {
-            const lane = branchLanes.get(branch.name) ?? 0;
-            const x = PADDING + lane * LANE_WIDTH;
-            const color = BRANCH_COLORS[branch.type || 'unknown'] || BRANCH_COLORS.unknown;
-
-            return (
-              <g
-                key={branch.name}
-                className="cursor-pointer"
-                onClick={() => onBranchClick?.(branch)}
-              >
-                <rect
-                  x={x - 4}
-                  y={10}
-                  width={8}
-                  height={svgHeight - 20}
-                  fill={color}
-                  opacity={0.06}
-                  rx={4}
-                />
+                {/* Metadata line */}
                 <text
-                  x={x}
-                  y={25}
+                  x={pos.x + 18}
+                  y={pos.y + 10}
                   fontSize={9}
-                  fill={color}
-                  textAnchor="middle"
-                  fontWeight="bold"
+                  fill={isHovered ? '#64748B' : '#CBD5E1'}
+                  fontFamily="'SF Mono', 'Fira Code', monospace"
                   className="select-none"
-                  fontFamily="Inter, system-ui, sans-serif"
-                  transform={`rotate(-45, ${x}, 25)`}
+                  style={{ transition: 'fill 0.15s' }}
                 >
-                  {branch.name}
+                  {commit.hash.substring(0, 7)}
+                  {commit.authorName ? `  ·  ${commit.authorName}` : ''}
+                  {commit.date ? `  ·  ${new Date(commit.date).toLocaleDateString()}` : ''}
                 </text>
               </g>
             );

@@ -1,105 +1,109 @@
-import { GitBranch, Activity, AlertTriangle, GitMerge, Zap, TrendingUp, Shield } from 'lucide-react';
-import { useApps } from '../hooks/useApps';
+import { useState } from 'react';
+import { GitBranch, Activity, AlertTriangle, GitMerge, Zap, TrendingUp, Shield, HelpCircle } from 'lucide-react';
 import { useBranches } from '../hooks/useBranches';
-import AppRegistration from '../components/app/AppRegistration';
 import AlertBanner from '../components/alerts/AlertBanner';
-import EmptyState from '../components/common/EmptyState';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import type { Branch, Alert } from '../types/app.types';
 
 interface DashboardPageProps {
-  selectedAppId: string | null;
-  onAppChange: (appId: string | null) => void;
+  appId: string;
 }
 
-export default function DashboardPage({
-  selectedAppId,
-  onAppChange,
-}: DashboardPageProps) {
-  const { data: appsData, isLoading: appsLoading } = useApps();
-  const { data: branchData } = useBranches(selectedAppId || '');
-  const apps = appsData?.apps || [];
+export default function DashboardPage({ appId }: DashboardPageProps) {
+  const { data: branchData, isLoading } = useBranches(appId);
   const branches = branchData?.branches || [];
   const alerts = branchData?.alerts || [];
 
-  if (appsLoading) return <LoadingSpinner />;
+  if (isLoading) return <LoadingSpinner />;
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Dashboard</h2>
-          <p className="text-sm text-gray-500 mt-0.5">Your branch health at a glance</p>
-        </div>
-        <AppRegistration onRegistered={(appId) => onAppChange(appId)} />
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900">Dashboard</h2>
+        <p className="text-sm text-gray-500 mt-0.5">Your branch health at a glance</p>
       </div>
 
-      {apps.length === 0 ? (
-        <EmptyState
-          title="Welcome to BranchTree"
-          description="Register your first app to start visualizing branches, tracking health, and spotting issues before they become problems."
+      {/* Hero Stats Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatWidget
+          label="Total Branches"
+          value={branches.length}
+          icon={GitBranch}
+          gradient="from-brand-500 to-brand-600"
+          bgAccent="bg-brand-50"
+          textColor="text-brand-600"
+          hint="The total number of branches tracked in this repository, including active, stale, and merged."
         />
-      ) : !selectedAppId ? (
-        <EmptyState
-          title="Select an App"
-          description="Choose an app from the dropdown above to see its branch dashboard."
+        <StatWidget
+          label="Active"
+          value={branches.filter((b) => !b.isMerged && !b.isStale).length}
+          icon={Zap}
+          gradient="from-emerald-500 to-emerald-600"
+          bgAccent="bg-emerald-50"
+          textColor="text-emerald-600"
+          hint="Branches with recent commits that haven't been merged yet. These are your team's work in progress."
         />
-      ) : (
+        <StatWidget
+          label="Stale"
+          value={branches.filter((b) => b.isStale).length}
+          icon={AlertTriangle}
+          gradient="from-amber-500 to-orange-500"
+          bgAccent="bg-amber-50"
+          textColor="text-amber-600"
+          hint="Branches with no activity in over 30 days. Consider merging or deleting these to keep the repo clean."
+        />
+        <StatWidget
+          label="Merged"
+          value={branches.filter((b) => b.isMerged).length}
+          icon={GitMerge}
+          gradient="from-gray-400 to-gray-500"
+          bgAccent="bg-gray-50"
+          textColor="text-gray-500"
+          hint="Branches that have been merged back into main. These can usually be safely deleted."
+        />
+      </div>
+
+      {/* Second Row: Health Score + Branch Types + Alerts */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <HealthScoreCard branches={branches} alerts={alerts} />
+        <BranchTypeCard branches={branches} />
+        <AlertsSummaryCard alerts={alerts} />
+      </div>
+
+      {/* Alerts Detail */}
+      <AlertBanner alerts={alerts} />
+    </div>
+  );
+}
+
+/* ──────────────────────────── Info Tooltip ──────────────────────────── */
+
+function InfoTooltip({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="relative">
+      <button
+        onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
+        className="p-0.5 text-gray-300 hover:text-gray-500 transition-colors"
+        aria-label="More info"
+      >
+        <HelpCircle className="w-3.5 h-3.5" />
+      </button>
+      {open && (
         <>
-          {/* Hero Stats Row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatWidget
-              label="Total Branches"
-              value={branches.length}
-              icon={GitBranch}
-              gradient="from-brand-500 to-brand-600"
-              bgAccent="bg-brand-50"
-              textColor="text-brand-600"
-            />
-            <StatWidget
-              label="Active"
-              value={branches.filter((b) => !b.isMerged && !b.isStale).length}
-              icon={Zap}
-              gradient="from-emerald-500 to-emerald-600"
-              bgAccent="bg-emerald-50"
-              textColor="text-emerald-600"
-            />
-            <StatWidget
-              label="Stale"
-              value={branches.filter((b) => b.isStale).length}
-              icon={AlertTriangle}
-              gradient="from-amber-500 to-orange-500"
-              bgAccent="bg-amber-50"
-              textColor="text-amber-600"
-            />
-            <StatWidget
-              label="Merged"
-              value={branches.filter((b) => b.isMerged).length}
-              icon={GitMerge}
-              gradient="from-gray-400 to-gray-500"
-              bgAccent="bg-gray-50"
-              textColor="text-gray-500"
-            />
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-gray-800 text-white rounded-xl px-3 py-2.5 text-xs leading-relaxed shadow-elevated animate-scale-in">
+            {text}
+            <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-gray-800" />
           </div>
-
-          {/* Second Row: Health Score + Branch Types + Alerts */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* Repository Health Score */}
-            <HealthScoreCard branches={branches} alerts={alerts} />
-
-            {/* Branch Type Breakdown */}
-            <BranchTypeCard branches={branches} />
-
-            {/* Alerts Summary */}
-            <AlertsSummaryCard alerts={alerts} />
-          </div>
-
-          {/* Alerts Detail */}
-          <AlertBanner alerts={alerts} />
         </>
       )}
     </div>
   );
 }
+
+/* ──────────────────────────── Stat Widget ──────────────────────────── */
 
 function StatWidget({
   label,
@@ -108,6 +112,7 @@ function StatWidget({
   gradient,
   bgAccent,
   textColor,
+  hint,
 }: {
   label: string;
   value: number;
@@ -115,12 +120,16 @@ function StatWidget({
   gradient: string;
   bgAccent: string;
   textColor: string;
+  hint: string;
 }) {
   return (
     <div className="card-static group">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-500 mb-1">{label}</p>
+          <div className="flex items-center gap-1.5 mb-1">
+            <p className="text-sm font-medium text-gray-500">{label}</p>
+            <InfoTooltip text={hint} />
+          </div>
           <p className="text-3xl font-bold text-gray-900">{value}</p>
         </div>
         <div className={`w-11 h-11 rounded-xl ${bgAccent} flex items-center justify-center transition-transform duration-200 group-hover:scale-110`}>
@@ -137,16 +146,18 @@ function StatWidget({
   );
 }
 
-function HealthScoreCard({ branches, alerts }: { branches: any[]; alerts: any[] }) {
+/* ──────────────────────────── Health Score ──────────────────────────── */
+
+function HealthScoreCard({ branches, alerts }: { branches: Branch[]; alerts: Alert[] }) {
   const total = branches.length || 1;
   const stale = branches.filter((b) => b.isStale).length;
   const errors = alerts.filter((a) => a.severity === 'error').length;
+  const diverged = branches.filter((b) => b.commitsBehind > 20).length;
 
-  // Health calculation
   let score = 100;
   score -= (stale / total) * 30;
   score -= errors * 5;
-  score -= branches.filter((b) => b.commitsBehind > 20).length * 3;
+  score -= diverged * 3;
   score = Math.max(Math.round(score), 0);
 
   const scoreColor = score >= 80 ? 'text-emerald-500' : score >= 50 ? 'text-amber-500' : 'text-red-500';
@@ -156,17 +167,29 @@ function HealthScoreCard({ branches, alerts }: { branches: any[]; alerts: any[] 
   const circumference = 2 * Math.PI * 54;
   const dashOffset = circumference - (score / 100) * circumference;
 
+  // Build breakdown
+  const factors: { label: string; impact: string; bad: boolean }[] = [];
+  if (stale > 0) factors.push({ label: `${stale} stale branch${stale > 1 ? 'es' : ''}`, impact: `-${Math.round((stale / total) * 30)} pts`, bad: true });
+  if (errors > 0) factors.push({ label: `${errors} critical alert${errors > 1 ? 's' : ''}`, impact: `-${errors * 5} pts`, bad: true });
+  if (diverged > 0) factors.push({ label: `${diverged} diverged branch${diverged > 1 ? 'es' : ''}`, impact: `-${diverged * 3} pts`, bad: true });
+  if (factors.length === 0) factors.push({ label: 'No issues found', impact: '', bad: false });
+
   return (
     <div className="card-static relative overflow-hidden">
       <div className={`absolute inset-0 bg-gradient-to-br ${bgGlow}`} />
       <div className="relative">
-        <div className="flex items-center gap-2 mb-4">
-          <Shield className="w-4 h-4 text-gray-500" />
-          <h3 className="text-sm font-semibold text-gray-700">Repository Health</h3>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Shield className="w-4 h-4 text-gray-500" />
+            <h3 className="text-sm font-semibold text-gray-700">Repository Health</h3>
+          </div>
+          <InfoTooltip text="A composite score based on stale branches (-30 pts max), critical alerts (-5 pts each), and diverged branches (-3 pts each). A score above 80 means the repo is in good shape." />
         </div>
-        <div className="flex items-center justify-center">
-          <div className="relative w-32 h-32">
-            <svg className="w-32 h-32 -rotate-90" viewBox="0 0 120 120">
+
+        <div className="flex items-center gap-5">
+          {/* Ring */}
+          <div className="relative w-24 h-24 flex-shrink-0">
+            <svg className="w-24 h-24 -rotate-90" viewBox="0 0 120 120">
               <circle cx="60" cy="60" r="54" fill="none" className="stroke-surface-100" strokeWidth="8" />
               <circle
                 cx="60" cy="60" r="54" fill="none"
@@ -179,37 +202,52 @@ function HealthScoreCard({ branches, alerts }: { branches: any[]; alerts: any[] 
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className={`text-3xl font-bold ${scoreColor}`}>{score}</span>
-              <span className="text-xs text-gray-400">/ 100</span>
+              <span className={`text-2xl font-bold ${scoreColor}`}>{score}</span>
+              <span className="text-[10px] text-gray-400">/ 100</span>
             </div>
           </div>
+
+          {/* Breakdown */}
+          <div className="flex-1 space-y-1.5">
+            <p className={`text-sm font-semibold ${scoreColor}`}>
+              {score >= 80 ? 'Great shape' : score >= 50 ? 'Needs attention' : 'Critical issues'}
+            </p>
+            {factors.map((f, i) => (
+              <div key={i} className="flex items-center justify-between text-xs">
+                <span className={f.bad ? 'text-gray-600' : 'text-emerald-600'}>{f.label}</span>
+                {f.impact && <span className="text-red-400 font-mono">{f.impact}</span>}
+              </div>
+            ))}
+          </div>
         </div>
-        <p className="text-center text-xs text-gray-500 mt-3">
-          {score >= 80 ? 'Great shape!' : score >= 50 ? 'Needs attention' : 'Critical issues'}
-        </p>
       </div>
     </div>
   );
 }
 
-function BranchTypeCard({ branches }: { branches: any[] }) {
+/* ──────────────────────────── Branch Types ──────────────────────────── */
+
+function BranchTypeCard({ branches }: { branches: Branch[] }) {
   const types = ['main', 'feature', 'release', 'hotfix', 'development', 'unknown'] as const;
   const total = branches.length || 1;
 
-  const typeConfig: Record<string, { label: string; color: string; bg: string }> = {
-    main: { label: 'Main', color: 'bg-branch-main', bg: 'bg-branch-bg-main' },
-    feature: { label: 'Feature', color: 'bg-branch-feature', bg: 'bg-branch-bg-feature' },
-    release: { label: 'Release', color: 'bg-branch-release', bg: 'bg-branch-bg-release' },
-    hotfix: { label: 'Hotfix', color: 'bg-branch-hotfix', bg: 'bg-branch-bg-hotfix' },
-    development: { label: 'Dev', color: 'bg-branch-development', bg: 'bg-branch-bg-development' },
-    unknown: { label: 'Other', color: 'bg-branch-unknown', bg: 'bg-branch-bg-unknown' },
+  const typeConfig: Record<string, { label: string; color: string; desc: string }> = {
+    main: { label: 'Main', color: 'bg-branch-main', desc: 'Primary integration branch' },
+    feature: { label: 'Feature', color: 'bg-branch-feature', desc: 'New features in development' },
+    release: { label: 'Release', color: 'bg-branch-release', desc: 'Stabilisation before release' },
+    hotfix: { label: 'Hotfix', color: 'bg-branch-hotfix', desc: 'Urgent production fixes' },
+    development: { label: 'Dev', color: 'bg-branch-development', desc: 'Shared development branch' },
+    unknown: { label: 'Other', color: 'bg-branch-unknown', desc: 'Uncategorised branches' },
   };
 
   return (
     <div className="card-static">
-      <div className="flex items-center gap-2 mb-4">
-        <TrendingUp className="w-4 h-4 text-gray-500" />
-        <h3 className="text-sm font-semibold text-gray-700">Branch Types</h3>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <TrendingUp className="w-4 h-4 text-gray-500" />
+          <h3 className="text-sm font-semibold text-gray-700">Branch Types</h3>
+        </div>
+        <InfoTooltip text="Branches are classified by naming convention (e.g. feature/, release/, hotfix/). This shows the distribution across your repository." />
       </div>
       <div className="space-y-3">
         {types.map((type) => {
@@ -220,7 +258,10 @@ function BranchTypeCard({ branches }: { branches: any[] }) {
           return (
             <div key={type} className="group">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-sm text-gray-600">{cfg.label}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">{cfg.label}</span>
+                  <span className="text-[10px] text-gray-400 hidden group-hover:inline">{cfg.desc}</span>
+                </div>
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold text-gray-900">{count}</span>
                   <span className="text-xs text-gray-400">{pct}%</span>
@@ -240,15 +281,20 @@ function BranchTypeCard({ branches }: { branches: any[] }) {
   );
 }
 
-function AlertsSummaryCard({ alerts }: { alerts: any[] }) {
+/* ──────────────────────────── Alerts Summary ──────────────────────────── */
+
+function AlertsSummaryCard({ alerts }: { alerts: Alert[] }) {
   const errors = alerts.filter((a) => a.severity === 'error');
   const warnings = alerts.filter((a) => a.severity === 'warning');
 
   return (
     <div className="card-static">
-      <div className="flex items-center gap-2 mb-4">
-        <Activity className="w-4 h-4 text-gray-500" />
-        <h3 className="text-sm font-semibold text-gray-700">Issues Overview</h3>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Activity className="w-4 h-4 text-gray-500" />
+          <h3 className="text-sm font-semibold text-gray-700">Issues Overview</h3>
+        </div>
+        <InfoTooltip text="Automated checks that flag potential problems: stale branches (no commits in 30+ days), divergence (20+ commits behind main), and version mismatches across branches." />
       </div>
 
       {alerts.length === 0 ? (
@@ -283,7 +329,6 @@ function AlertsSummaryCard({ alerts }: { alerts: any[] }) {
               </div>
             </div>
           )}
-          {/* Recent alerts list */}
           <div className="mt-2 space-y-1.5 max-h-32 overflow-y-auto">
             {alerts.slice(0, 4).map((alert, i) => (
               <div key={i} className="flex items-center gap-2 text-xs text-gray-600 py-1">

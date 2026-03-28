@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useState } from 'react';
 import MainLayout from './components/layout/MainLayout';
+import ProjectListPage from './pages/ProjectListPage';
 import DashboardPage from './pages/DashboardPage';
 import GraphPage from './pages/GraphPage';
 import BranchListPage from './pages/BranchListPage';
@@ -13,13 +14,23 @@ export default function App() {
   return (
     <MainLayout selectedAppId={selectedAppId} onAppChange={setSelectedAppId}>
       <Routes>
+        {/* Project list — always accessible */}
         <Route
           path="/"
           element={
-            <DashboardPage
-              selectedAppId={selectedAppId}
-              onAppChange={setSelectedAppId}
-            />
+            <ProjectListPage onAppChange={setSelectedAppId} />
+          }
+        />
+
+        {/* Project-scoped pages — require a selected project */}
+        <Route
+          path="/dashboard"
+          element={
+            selectedAppId ? (
+              <DashboardPage appId={selectedAppId} />
+            ) : (
+              <Navigate to="/" replace />
+            )
           }
         />
         <Route
