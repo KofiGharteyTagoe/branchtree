@@ -1,7 +1,8 @@
 import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { config } from '../config/env.js';
+import { getJwtSecret } from '../config/runtimeConfig.js';
 import * as appModel from '../models/app.model.js';
+import * as userModel from '../models/user.model.js';
 
 // Extend Express Request to include user
 declare global {
@@ -31,7 +32,15 @@ export function authenticate(req: Request, res: Response, next: NextFunction): v
   const token = authHeader.split(' ')[1];
 
   try {
-    const payload = jwt.verify(token, config.jwtSecret) as { userId: number; email: string };
+    const payload = jwt.verify(token, getJwtSecret()) as { userId: number; email: string };
+
+    // Check if user is restricted
+    const user = userModel.getUserById(payload.userId);
+    if (user && user.is_restricted === 1) {
+      res.status(403).json({ error: 'Your account has been restricted', reason: user.restriction_reason });
+      return;
+    }
+
     req.user = { userId: payload.userId, email: payload.email };
     next();
   } catch {

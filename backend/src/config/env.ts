@@ -7,18 +7,6 @@ const backendRoot = path.resolve(__dirname, '..', '..');
 
 dotenv.config({ path: path.join(backendRoot, '.env') });
 
-function requireEnv(key: string): string {
-  const value = process.env[key];
-  if (!value || value === `your_personal_access_token_here`) {
-    throw new Error(
-      `Missing required environment variable: ${key}\n` +
-      `Please copy backend/.env.example to backend/.env and fill in all values.\n` +
-      `See docs/SETUP.md for detailed instructions.`
-    );
-  }
-  return value;
-}
-
 function optionalEnv(key: string, defaultValue: string): string {
   return process.env[key] || defaultValue;
 }
@@ -33,28 +21,15 @@ function optionalInt(key: string, defaultValue: number): number {
   return parsed;
 }
 
+/**
+ * Infrastructure config — only settings that define WHERE the app runs and stores data.
+ * All secrets, credentials, and business settings are managed via the admin UI
+ * and stored in the database settings table.
+ */
 export const config = {
   port: optionalInt('PORT', 3001),
-  corsOrigin: optionalEnv('CORS_ORIGIN', 'http://localhost:5173'),
-
   dataDir: path.resolve(backendRoot, optionalEnv('DATA_DIR', './data')),
   dbPath: path.resolve(backendRoot, optionalEnv('DB_PATH', './data/branchtree.sqlite')),
-
-  syncIntervalMinutes: optionalInt('SYNC_INTERVAL_MINUTES', 15),
-  staleBranchDays: optionalInt('STALE_BRANCH_DAYS', 30),
-  divergenceThreshold: optionalInt('DIVERGENCE_THRESHOLD', 20),
-
-  // Auth & Security
-  jwtSecret: requireEnv('JWT_SECRET'),
-  encryptionKey: requireEnv('ENCRYPTION_KEY'),
-  oauthCallbackUrl: optionalEnv('OAUTH_CALLBACK_URL', 'http://localhost:3001'),
-  frontendUrl: optionalEnv('FRONTEND_URL', 'http://localhost:5173'),
-
-  // OAuth providers (at least one pair must be configured)
-  googleClientId: optionalEnv('GOOGLE_CLIENT_ID', ''),
-  googleClientSecret: optionalEnv('GOOGLE_CLIENT_SECRET', ''),
-  microsoftClientId: optionalEnv('MICROSOFT_CLIENT_ID', ''),
-  microsoftClientSecret: optionalEnv('MICROSOFT_CLIENT_SECRET', ''),
 } as const;
 
 export type Config = typeof config;

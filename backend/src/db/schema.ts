@@ -1,15 +1,26 @@
 import type { Database } from 'sql.js';
-import { encrypt, isEncrypted } from '../utils/encryption.js';
 
 export function initializeDatabase(db: Database): void {
+  // Settings table — key/value store for all app configuration
+  db.run(`
+    CREATE TABLE IF NOT EXISTS settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      is_secret INTEGER DEFAULT 0,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+
   db.run(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       email TEXT UNIQUE NOT NULL,
       display_name TEXT,
       avatar_url TEXT,
-      oauth_provider TEXT NOT NULL,
-      oauth_id TEXT NOT NULL,
+      oauth_provider TEXT NOT NULL DEFAULT 'local',
+      oauth_id TEXT NOT NULL DEFAULT '',
+      password_hash TEXT,
+      is_admin INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       last_login TEXT,
       UNIQUE(oauth_provider, oauth_id)
@@ -80,13 +91,30 @@ export function initializeDatabase(db: Database): void {
     )
   `);
 
+  db.run(`
+    CREATE TABLE IF NOT EXISTS feedback (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL REFERENCES users(id),
+      category TEXT NOT NULL DEFAULT 'general',
+      title TEXT NOT NULL,
+      description TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'open',
+      admin_notes TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+
   db.run(`CREATE INDEX IF NOT EXISTS idx_branches_app_id ON branches(app_id)`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_commits_app_id ON commits(app_id)`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_merge_events_app_id ON merge_events(app_id)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_feedback_user_id ON feedback(user_id)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_feedback_status ON feedback(status)`);
 
   // Migrations for existing databases — safe to run multiple times (ALTER TABLE IF NOT EXISTS)
   migrateToProviderSchema(db);
-  migrateEncryptPats(db);
+  migrateUserSchema(db);
+  migrateUserRestrictions(db);
 }
 
 /**
@@ -126,24 +154,17 @@ function migrateToProviderSchema(db: Database): void {
 }
 
 /**
- * Encrypt any plaintext PATs that exist from before the encryption feature.
+ * Add admin and local-auth columns to users table.
  */
-function migrateEncryptPats(db: Database): void {
-  try {
-    const stmt = db.prepare('SELECT app_id, pat FROM apps WHERE pat IS NOT NULL');
-    const updates: Array<{ appId: string; encrypted: string }> = [];
-    while (stmt.step()) {
-      const row = stmt.getAsObject();
-      const pat = row.pat as string;
-      if (pat && !isEncrypted(pat)) {
-        updates.push({ appId: row.app_id as string, encrypted: encrypt(pat) });
-      }
-    }
-    stmt.free();
-    for (const { appId, encrypted } of updates) {
-      db.run('UPDATE apps SET pat = ? WHERE app_id = ?', [encrypted, appId]);
-    }
-  } catch {
-    /* encryption migration may fail if encryption key not yet configured */
-  }
+function migrateUserSchema(db: Database): void {
+  try { db.run(`ALTER TABLE users ADD COLUMN password_hash TEXT`); } catch { /* exists */ }
+  try { db.run(`ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0`); } catch { /* exists */ }
+}
+
+/**
+ * Add restriction columns to users table.
+ */
+function migrateUserRestrictions(db: Database): void {
+  try { db.run(`ALTER TABLE users ADD COLUMN is_restricted INTEGER NOT NULL DEFAULT 0`); } catch { /* exists */ }
+  try { db.run(`ALTER TABLE users ADD COLUMN restriction_reason TEXT`); } catch { /* exists */ }
 }

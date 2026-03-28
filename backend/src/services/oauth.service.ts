@@ -1,4 +1,4 @@
-import { config } from '../config/env.js';
+import { getGoogleClientId, getGoogleClientSecret, getMicrosoftClientId, getMicrosoftClientSecret, getOauthCallbackUrl } from '../config/runtimeConfig.js';
 
 export interface OAuthUserProfile {
   email: string;
@@ -12,8 +12,8 @@ export interface OAuthUserProfile {
 
 export function getGoogleAuthUrl(): string {
   const params = new URLSearchParams({
-    client_id: config.googleClientId,
-    redirect_uri: `${config.oauthCallbackUrl}/api/auth/google/callback`,
+    client_id: getGoogleClientId(),
+    redirect_uri: `${getOauthCallbackUrl()}/api/auth/google/callback`,
     response_type: 'code',
     scope: 'openid email profile',
     access_type: 'offline',
@@ -29,9 +29,9 @@ export async function exchangeGoogleCode(code: string): Promise<OAuthUserProfile
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
       code,
-      client_id: config.googleClientId,
-      client_secret: config.googleClientSecret,
-      redirect_uri: `${config.oauthCallbackUrl}/api/auth/google/callback`,
+      client_id: getGoogleClientId(),
+      client_secret: getGoogleClientSecret(),
+      redirect_uri: `${getOauthCallbackUrl()}/api/auth/google/callback`,
       grant_type: 'authorization_code',
     }),
   });
@@ -72,8 +72,8 @@ export async function exchangeGoogleCode(code: string): Promise<OAuthUserProfile
 
 export function getMicrosoftAuthUrl(): string {
   const params = new URLSearchParams({
-    client_id: config.microsoftClientId,
-    redirect_uri: `${config.oauthCallbackUrl}/api/auth/microsoft/callback`,
+    client_id: getMicrosoftClientId(),
+    redirect_uri: `${getOauthCallbackUrl()}/api/auth/microsoft/callback`,
     response_type: 'code',
     scope: 'openid email profile User.Read',
     response_mode: 'query',
@@ -88,9 +88,9 @@ export async function exchangeMicrosoftCode(code: string): Promise<OAuthUserProf
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
       code,
-      client_id: config.microsoftClientId,
-      client_secret: config.microsoftClientSecret,
-      redirect_uri: `${config.oauthCallbackUrl}/api/auth/microsoft/callback`,
+      client_id: getMicrosoftClientId(),
+      client_secret: getMicrosoftClientSecret(),
+      redirect_uri: `${getOauthCallbackUrl()}/api/auth/microsoft/callback`,
       grant_type: 'authorization_code',
     }),
   });
@@ -132,10 +132,10 @@ export async function exchangeMicrosoftCode(code: string): Promise<OAuthUserProf
  */
 export function getAvailableProviders(): Array<'google' | 'microsoft'> {
   const providers: Array<'google' | 'microsoft'> = [];
-  if (config.googleClientId && config.googleClientSecret) {
+  if (getGoogleClientId() && getGoogleClientSecret()) {
     providers.push('google');
   }
-  if (config.microsoftClientId && config.microsoftClientSecret) {
+  if (getMicrosoftClientId() && getMicrosoftClientSecret()) {
     providers.push('microsoft');
   }
   return providers;

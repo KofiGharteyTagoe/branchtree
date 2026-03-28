@@ -1,5 +1,5 @@
 import cron from 'node-cron';
-import { config } from '../config/env.js';
+import { getSyncIntervalMinutes } from '../config/runtimeConfig.js';
 import * as appModel from '../models/app.model.js';
 import { syncApp } from './ingestion.service.js';
 
@@ -10,7 +10,7 @@ let scheduledTask: cron.ScheduledTask | null = null;
  * Runs every N minutes (configured via SYNC_INTERVAL_MINUTES).
  */
 export function startScheduler(): void {
-  const minutes = config.syncIntervalMinutes;
+  const minutes = getSyncIntervalMinutes();
 
   // node-cron format: "*/N * * * *" = every N minutes
   const cronExpression = `*/${minutes} * * * *`;

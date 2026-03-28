@@ -8,6 +8,9 @@ export interface AuthUser {
   displayName: string | null;
   avatarUrl: string | null;
   oauthProvider: string;
+  isAdmin?: boolean;
+  isRestricted?: boolean;
+  restrictionReason?: string | null;
 }
 
 interface AuthContextValue {

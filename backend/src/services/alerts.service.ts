@@ -1,4 +1,4 @@
-import { config } from '../config/env.js';
+import { getStaleBranchDays, getDivergenceThreshold } from '../config/runtimeConfig.js';
 import * as branchModel from '../models/branch.model.js';
 import type { ApiAlert } from '../types/api.types.js';
 import type { BranchRow } from '../types/db.types.js';
@@ -23,7 +23,7 @@ export function getAlerts(appId: string): ApiAlert[] {
 function getStaleBranchAlerts(branches: BranchRow[]): ApiAlert[] {
   const alerts: ApiAlert[] = [];
   const now = Date.now();
-  const staleDays = config.staleBranchDays;
+  const staleDays = getStaleBranchDays();
   const staleThreshold = staleDays * 24 * 60 * 60 * 1000;
 
   for (const branch of branches) {
@@ -56,7 +56,7 @@ function getStaleBranchAlerts(branches: BranchRow[]): ApiAlert[] {
  */
 function getDivergenceAlerts(branches: BranchRow[]): ApiAlert[] {
   const alerts: ApiAlert[] = [];
-  const threshold = config.divergenceThreshold;
+  const threshold = getDivergenceThreshold();
 
   for (const branch of branches) {
     if (branch.branch_type === 'main') continue;

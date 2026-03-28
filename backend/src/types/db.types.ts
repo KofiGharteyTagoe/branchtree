@@ -7,6 +7,10 @@ export interface UserRow {
   avatar_url: string | null;
   oauth_provider: string;
   oauth_id: string;
+  password_hash: string | null;
+  is_admin: number;
+  is_restricted: number;
+  restriction_reason: string | null;
   created_at: string;
   last_login: string | null;
 }
@@ -63,4 +67,16 @@ export interface MergeEventRow {
   target_branch: string | null;
   merged_by: string | null;
   merged_date: string | null;
+}
+
+export interface FeedbackRow {
+  id: number;
+  user_id: number;
+  category: string;
+  title: string;
+  description: string;
+  status: string;
+  admin_notes: string | null;
+  created_at: string;
+  updated_at: string;
 }

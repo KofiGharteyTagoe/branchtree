@@ -1,5 +1,5 @@
 import { randomBytes, createCipheriv, createDecipheriv } from 'crypto';
-import { config } from '../config/env.js';
+import { getEncryptionKey } from '../config/runtimeConfig.js';
 
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 16;
@@ -7,7 +7,7 @@ const AUTH_TAG_LENGTH = 16;
 const SEPARATOR = ':';
 
 function getKey(): Buffer {
-  return Buffer.from(config.encryptionKey, 'hex');
+  return Buffer.from(getEncryptionKey(), 'hex');
 }
 
 export function encrypt(plaintext: string): string {

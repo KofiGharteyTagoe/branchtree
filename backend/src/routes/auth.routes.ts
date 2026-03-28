@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import jwt from 'jsonwebtoken';
-import { config } from '../config/env.js';
+import { getJwtSecret, getFrontendUrl, getGoogleClientId, getGoogleClientSecret, getMicrosoftClientId, getMicrosoftClientSecret } from '../config/runtimeConfig.js';
 import * as userModel from '../models/user.model.js';
 import {
   getGoogleAuthUrl,
@@ -14,7 +14,7 @@ import type { OAuthUserProfile } from '../services/oauth.service.js';
 export const authRouter = Router();
 
 function createJwt(userId: number, email: string): string {
-  return jwt.sign({ userId, email }, config.jwtSecret, { expiresIn: '24h' });
+  return jwt.sign({ userId, email }, getJwtSecret(), { expiresIn: '24h' });
 }
 
 function handleOAuthCallback(profile: OAuthUserProfile): string {
@@ -41,7 +41,7 @@ authRouter.get('/auth/me', (req, res) => {
   }
   try {
     const token = authHeader.split(' ')[1];
-    const payload = jwt.verify(token, config.jwtSecret) as { userId: number; email: string };
+    const payload = jwt.verify(token, getJwtSecret()) as { userId: number; email: string };
     const user = userModel.getUserById(payload.userId);
     if (!user) {
       return res.status(401).json({ error: 'User not found' });
@@ -52,6 +52,9 @@ authRouter.get('/auth/me', (req, res) => {
       displayName: user.display_name,
       avatarUrl: user.avatar_url,
       oauthProvider: user.oauth_provider,
+      isAdmin: user.is_admin === 1,
+      isRestricted: user.is_restricted === 1,
+      restrictionReason: user.restriction_reason,
     });
   } catch {
     return res.status(401).json({ error: 'Invalid token' });
@@ -62,7 +65,7 @@ authRouter.get('/auth/me', (req, res) => {
 
 // GET /api/auth/google — Initiate Google OAuth
 authRouter.get('/auth/google', (_req, res) => {
-  if (!config.googleClientId || !config.googleClientSecret) {
+  if (!getGoogleClientId() || !getGoogleClientSecret()) {
     return res.status(503).json({ error: 'Google OAuth is not configured' });
   }
   res.redirect(getGoogleAuthUrl());
@@ -72,15 +75,15 @@ authRouter.get('/auth/google', (_req, res) => {
 authRouter.get('/auth/google/callback', async (req, res) => {
   const { code, error } = req.query;
   if (error || !code || typeof code !== 'string') {
-    return res.redirect(`${config.frontendUrl}/login?error=google_auth_failed`);
+    return res.redirect(`${getFrontendUrl()}/login?error=google_auth_failed`);
   }
   try {
     const profile = await exchangeGoogleCode(code);
     const token = handleOAuthCallback(profile);
-    res.redirect(`${config.frontendUrl}/auth/callback?token=${encodeURIComponent(token)}`);
+    res.redirect(`${getFrontendUrl()}/auth/callback?token=${encodeURIComponent(token)}`);
   } catch (err) {
     console.error('Google OAuth error:', err);
-    res.redirect(`${config.frontendUrl}/login?error=google_auth_failed`);
+    res.redirect(`${getFrontendUrl()}/login?error=google_auth_failed`);
   }
 });
 
@@ -88,7 +91,7 @@ authRouter.get('/auth/google/callback', async (req, res) => {
 
 // GET /api/auth/microsoft — Initiate Microsoft OAuth
 authRouter.get('/auth/microsoft', (_req, res) => {
-  if (!config.microsoftClientId || !config.microsoftClientSecret) {
+  if (!getMicrosoftClientId() || !getMicrosoftClientSecret()) {
     return res.status(503).json({ error: 'Microsoft OAuth is not configured' });
   }
   res.redirect(getMicrosoftAuthUrl());
@@ -98,14 +101,14 @@ authRouter.get('/auth/microsoft', (_req, res) => {
 authRouter.get('/auth/microsoft/callback', async (req, res) => {
   const { code, error } = req.query;
   if (error || !code || typeof code !== 'string') {
-    return res.redirect(`${config.frontendUrl}/login?error=microsoft_auth_failed`);
+    return res.redirect(`${getFrontendUrl()}/login?error=microsoft_auth_failed`);
   }
   try {
     const profile = await exchangeMicrosoftCode(code);
     const token = handleOAuthCallback(profile);
-    res.redirect(`${config.frontendUrl}/auth/callback?token=${encodeURIComponent(token)}`);
+    res.redirect(`${getFrontendUrl()}/auth/callback?token=${encodeURIComponent(token)}`);
   } catch (err) {
     console.error('Microsoft OAuth error:', err);
-    res.redirect(`${config.frontendUrl}/login?error=microsoft_auth_failed`);
+    res.redirect(`${getFrontendUrl()}/login?error=microsoft_auth_failed`);
   }
 });
