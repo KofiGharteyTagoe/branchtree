@@ -43,6 +43,26 @@ export interface ApiGraphData {
   nodes: ApiCommit[];
   edges: Array<{ from: string; to: string }>;
   branches: ApiBranch[];
+  pagination?: {
+    totalCommits: number;
+    returnedCommits: number;
+    hasMore: boolean;
+    oldestDate: string | null;
+    newestDate: string | null;
+  };
+}
+
+export interface ApiGraphSummary {
+  totalCommits: number;
+  oldestDate: string | null;
+  newestDate: string | null;
+  branchCount: number;
+  branches: Array<{
+    name: string;
+    type: string | null;
+    latestCommitDate: string | null;
+    isStale: boolean;
+  }>;
 }
 
 export interface ApiMergeEvent {

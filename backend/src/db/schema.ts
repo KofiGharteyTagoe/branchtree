@@ -1,6 +1,21 @@
 import type { Database } from 'sql.js';
+import { encrypt, isEncrypted } from '../utils/encryption.js';
 
 export function initializeDatabase(db: Database): void {
+  db.run(`
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT UNIQUE NOT NULL,
+      display_name TEXT,
+      avatar_url TEXT,
+      oauth_provider TEXT NOT NULL,
+      oauth_id TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      last_login TEXT,
+      UNIQUE(oauth_provider, oauth_id)
+    )
+  `);
+
   db.run(`
     CREATE TABLE IF NOT EXISTS apps (
       app_id TEXT PRIMARY KEY,
@@ -9,6 +24,7 @@ export function initializeDatabase(db: Database): void {
       repo_url TEXT,
       repo_type TEXT,
       provider_type TEXT NOT NULL DEFAULT 'mendix',
+      owner_id INTEGER REFERENCES users(id),
       last_synced TEXT
     )
   `);
@@ -70,6 +86,7 @@ export function initializeDatabase(db: Database): void {
 
   // Migrations for existing databases — safe to run multiple times (ALTER TABLE IF NOT EXISTS)
   migrateToProviderSchema(db);
+  migrateEncryptPats(db);
 }
 
 /**
@@ -77,6 +94,9 @@ export function initializeDatabase(db: Database): void {
  * Uses try/catch because SQLite doesn't support IF NOT EXISTS for ALTER TABLE.
  */
 function migrateToProviderSchema(db: Database): void {
+  // Add owner_id to apps (multi-tenancy)
+  try { db.run(`ALTER TABLE apps ADD COLUMN owner_id INTEGER REFERENCES users(id)`); } catch { /* column already exists */ }
+
   // Add provider_type to apps
   try { db.run(`ALTER TABLE apps ADD COLUMN provider_type TEXT NOT NULL DEFAULT 'mendix'`); } catch { /* column already exists */ }
 
@@ -103,4 +123,27 @@ function migrateToProviderSchema(db: Database): void {
       WHERE mendix_version IS NOT NULL AND provider_metadata = '{}'
     `);
   } catch { /* json functions may not be available or data already migrated */ }
+}
+
+/**
+ * Encrypt any plaintext PATs that exist from before the encryption feature.
+ */
+function migrateEncryptPats(db: Database): void {
+  try {
+    const stmt = db.prepare('SELECT app_id, pat FROM apps WHERE pat IS NOT NULL');
+    const updates: Array<{ appId: string; encrypted: string }> = [];
+    while (stmt.step()) {
+      const row = stmt.getAsObject();
+      const pat = row.pat as string;
+      if (pat && !isEncrypted(pat)) {
+        updates.push({ appId: row.app_id as string, encrypted: encrypt(pat) });
+      }
+    }
+    stmt.free();
+    for (const { appId, encrypted } of updates) {
+      db.run('UPDATE apps SET pat = ? WHERE app_id = ?', [encrypted, appId]);
+    }
+  } catch {
+    /* encryption migration may fail if encryption key not yet configured */
+  }
 }

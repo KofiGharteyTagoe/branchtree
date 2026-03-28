@@ -43,6 +43,18 @@ export const config = {
   syncIntervalMinutes: optionalInt('SYNC_INTERVAL_MINUTES', 15),
   staleBranchDays: optionalInt('STALE_BRANCH_DAYS', 30),
   divergenceThreshold: optionalInt('DIVERGENCE_THRESHOLD', 20),
+
+  // Auth & Security
+  jwtSecret: requireEnv('JWT_SECRET'),
+  encryptionKey: requireEnv('ENCRYPTION_KEY'),
+  oauthCallbackUrl: optionalEnv('OAUTH_CALLBACK_URL', 'http://localhost:3001'),
+  frontendUrl: optionalEnv('FRONTEND_URL', 'http://localhost:5173'),
+
+  // OAuth providers (at least one pair must be configured)
+  googleClientId: optionalEnv('GOOGLE_CLIENT_ID', ''),
+  googleClientSecret: optionalEnv('GOOGLE_CLIENT_SECRET', ''),
+  microsoftClientId: optionalEnv('MICROSOFT_CLIENT_ID', ''),
+  microsoftClientSecret: optionalEnv('MICROSOFT_CLIENT_SECRET', ''),
 } as const;
 
 export type Config = typeof config;

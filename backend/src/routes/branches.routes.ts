@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { validateAppId, validateBranchName } from '../middleware/validateParams.js';
 import { createApiError } from '../middleware/errorHandler.js';
+import { authorizeAppOwner } from '../middleware/auth.js';
 import * as branchModel from '../models/branch.model.js';
 import * as commitModel from '../models/commit.model.js';
 import * as alertsService from '../services/alerts.service.js';
@@ -13,7 +14,7 @@ function safeJsonParse(json: string, fallback: unknown = {}): unknown {
 }
 
 // GET /api/apps/:appId/branches — List all branches with metadata
-branchesRouter.get('/apps/:appId/branches', validateAppId, (req, res) => {
+branchesRouter.get('/apps/:appId/branches', validateAppId, authorizeAppOwner, (req, res) => {
   const branches = branchModel.getBranches(req.params.appId);
   const alerts = alertsService.getAlerts(req.params.appId);
 
@@ -40,6 +41,7 @@ branchesRouter.get('/apps/:appId/branches', validateAppId, (req, res) => {
 branchesRouter.get(
   '/apps/:appId/branches/:branchName',
   validateAppId,
+  authorizeAppOwner,
   validateBranchName,
   (req, res, next) => {
     const branch = branchModel.getBranch(req.params.appId, req.params.branchName);

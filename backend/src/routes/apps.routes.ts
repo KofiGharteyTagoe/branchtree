@@ -2,15 +2,16 @@ import { Router } from 'express';
 import * as appModel from '../models/app.model.js';
 import { createApiError } from '../middleware/errorHandler.js';
 import { validateAppId } from '../middleware/validateParams.js';
+import { authorizeAppOwner } from '../middleware/auth.js';
 import { getProvider, isValidProviderType } from '../providers/index.js';
 import type { ApiApp } from '../types/api.types.js';
 import type { ProviderType } from '../types/provider.types.js';
 
 export const appsRouter = Router();
 
-// GET /api/apps — List all registered apps
-appsRouter.get('/apps', (_req, res) => {
-  const apps = appModel.getApps();
+// GET /api/apps — List apps owned by the current user
+appsRouter.get('/apps', (req, res) => {
+  const apps = appModel.getApps(req.user!.userId);
   const response: ApiApp[] = apps.map((app) => ({
     appId: app.app_id,
     appName: app.app_name,
@@ -51,7 +52,7 @@ appsRouter.post('/apps', (req, res, next) => {
     return next(createApiError('repoUrl is required for this provider type.', 400));
   }
 
-  const app = appModel.createApp(appId, pat, provType as ProviderType, appName, repoUrl);
+  const app = appModel.createApp(appId, pat, provType as ProviderType, appName, repoUrl, req.user!.userId);
   // Never return the PAT in the response
   res.status(201).json({
     appId: app.app_id,
@@ -65,7 +66,7 @@ appsRouter.post('/apps', (req, res, next) => {
 });
 
 // PUT /api/apps/:appId/pat — Update the PAT for an existing app
-appsRouter.put('/apps/:appId/pat', validateAppId, (req, res, next) => {
+appsRouter.put('/apps/:appId/pat', validateAppId, authorizeAppOwner, (req, res, next) => {
   const { pat } = req.body;
   if (!pat || typeof pat !== 'string') {
     return next(createApiError('pat (credentials) is required', 400));
@@ -81,7 +82,7 @@ appsRouter.put('/apps/:appId/pat', validateAppId, (req, res, next) => {
 });
 
 // GET /api/apps/:appId — Get a single app
-appsRouter.get('/apps/:appId', validateAppId, (req, res, next) => {
+appsRouter.get('/apps/:appId', validateAppId, authorizeAppOwner, (req, res, next) => {
   const app = appModel.getApp(req.params.appId);
   if (!app) {
     return next(createApiError('App not found', 404));
@@ -97,7 +98,7 @@ appsRouter.get('/apps/:appId', validateAppId, (req, res, next) => {
 });
 
 // DELETE /api/apps/:appId — Remove an app
-appsRouter.delete('/apps/:appId', validateAppId, (req, res, next) => {
+appsRouter.delete('/apps/:appId', validateAppId, authorizeAppOwner, (req, res, next) => {
   const app = appModel.getApp(req.params.appId);
   if (!app) {
     return next(createApiError('App not found', 404));

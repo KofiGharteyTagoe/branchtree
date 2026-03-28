@@ -3,7 +3,8 @@
     "allow": [
       "Bash(npm install:*)",
       "Bash(npm view:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(grep -r \"users\\\\|tenants\\\\|organizations\\\\|accounts\" '/c/Users/nenyi/OneDrive/Documents/Claude Code/branchtree/backend/src' --include=*.ts)"
     ]
   }
 }

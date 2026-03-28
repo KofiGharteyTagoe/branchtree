@@ -1,8 +1,9 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, GitBranch, List, Clock, ArrowLeft } from 'lucide-react';
+import { LayoutDashboard, GitBranch, List, Clock, ArrowLeft, LogOut } from 'lucide-react';
 import SyncButton from '../app/SyncButton';
 import DeleteAppButton from '../app/DeleteAppButton';
 import { useApps } from '../../hooks/useApps';
+import { useAuth } from '../../context/AuthContext';
 
 interface HeaderProps {
   selectedAppId: string | null;
@@ -19,6 +20,7 @@ const navItems = [
 export default function Header({ selectedAppId, onAppChange }: HeaderProps) {
   const navigate = useNavigate();
   const { data } = useApps();
+  const { user, logout } = useAuth();
   const selectedApp = data?.apps.find((a) => a.appId === selectedAppId);
 
   const handleBack = () => {
@@ -83,18 +85,45 @@ export default function Header({ selectedAppId, onAppChange }: HeaderProps) {
           </nav>
         )}
 
-        {/* Right: Actions (only when a project is selected) */}
-        {selectedAppId ? (
-          <div className="flex items-center gap-3">
-            <SyncButton appId={selectedAppId} />
-            <DeleteAppButton
-              appId={selectedAppId}
-              onDeleted={handleBack}
-            />
-          </div>
-        ) : (
-          <div /> /* Spacer for centering */
-        )}
+        {/* Right: Actions + User */}
+        <div className="flex items-center gap-3">
+          {selectedAppId && (
+            <>
+              <SyncButton appId={selectedAppId} />
+              <DeleteAppButton
+                appId={selectedAppId}
+                onDeleted={handleBack}
+              />
+              <div className="w-px h-6 bg-surface-200" />
+            </>
+          )}
+
+          {user && (
+            <div className="flex items-center gap-2">
+              {user.avatarUrl ? (
+                <img
+                  src={user.avatarUrl}
+                  alt=""
+                  className="w-7 h-7 rounded-full"
+                />
+              ) : (
+                <div className="w-7 h-7 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-xs font-bold">
+                  {(user.displayName || user.email)[0].toUpperCase()}
+                </div>
+              )}
+              <span className="text-sm text-surface-600 hidden lg:inline max-w-[120px] truncate">
+                {user.displayName || user.email}
+              </span>
+              <button
+                onClick={logout}
+                className="p-1.5 text-surface-400 hover:text-red-500 transition-colors"
+                title="Sign out"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );

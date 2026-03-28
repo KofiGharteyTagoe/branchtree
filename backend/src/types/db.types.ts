@@ -1,5 +1,16 @@
 import type { ProviderType } from './provider.types.js';
 
+export interface UserRow {
+  id: number;
+  email: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  oauth_provider: string;
+  oauth_id: string;
+  created_at: string;
+  last_login: string | null;
+}
+
 export interface AppRow {
   app_id: string;
   app_name: string | null;
@@ -7,6 +18,7 @@ export interface AppRow {
   repo_url: string | null;
   repo_type: string | null;
   provider_type: ProviderType;
+  owner_id: number | null;
   last_synced: string | null;
 }
 

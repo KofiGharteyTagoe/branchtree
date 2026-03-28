@@ -1,13 +1,14 @@
 import { Router } from 'express';
 import { validateAppId } from '../middleware/validateParams.js';
 import { createApiError } from '../middleware/errorHandler.js';
+import { authorizeAppOwner } from '../middleware/auth.js';
 import * as appModel from '../models/app.model.js';
 import { syncApp } from '../services/ingestion.service.js';
 
 export const syncRouter = Router();
 
 // POST /api/apps/:appId/sync — Trigger a manual data sync
-syncRouter.post('/apps/:appId/sync', validateAppId, async (req, res, next) => {
+syncRouter.post('/apps/:appId/sync', validateAppId, authorizeAppOwner, async (req, res, next) => {
   try {
     const app = appModel.getApp(req.params.appId);
     if (!app) {

@@ -64,6 +64,72 @@ export function getCommits(appId: string): CommitRow[] {
   return rows;
 }
 
+export interface CommitQueryOptions {
+  since?: string;
+  until?: string;
+  limit?: number;
+}
+
+export function getCommitsPaginated(appId: string, options: CommitQueryOptions): CommitRow[] {
+  const db = getDatabase();
+  const conditions = ['app_id = ?'];
+  const params: (string | number)[] = [appId];
+
+  if (options.since) {
+    conditions.push('commit_date >= ?');
+    params.push(options.since);
+  }
+  if (options.until) {
+    conditions.push('commit_date <= ?');
+    params.push(options.until);
+  }
+
+  let sql = `SELECT * FROM commits WHERE ${conditions.join(' AND ')} ORDER BY commit_date DESC`;
+  if (options.limit) {
+    sql += ` LIMIT ${options.limit}`;
+  }
+
+  const stmt = db.prepare(sql);
+  stmt.bind(params);
+  const rows: CommitRow[] = [];
+  while (stmt.step()) {
+    rows.push(rowToCommit(stmt.getAsObject()));
+  }
+  stmt.free();
+  return rows;
+}
+
+export function getCommitCount(appId: string): number {
+  const db = getDatabase();
+  const stmt = db.prepare('SELECT COUNT(*) as cnt FROM commits WHERE app_id = ?');
+  stmt.bind([appId]);
+  if (stmt.step()) {
+    const row = stmt.getAsObject();
+    stmt.free();
+    return (row.cnt as number) || 0;
+  }
+  stmt.free();
+  return 0;
+}
+
+export function getCommitDateRange(appId: string): { oldest: string | null; newest: string | null } {
+  const db = getDatabase();
+  const stmt = db.prepare(
+    'SELECT MIN(commit_date) as oldest, MAX(commit_date) as newest FROM commits WHERE app_id = ?'
+  );
+  stmt.bind([appId]);
+  if (stmt.step()) {
+    const row = stmt.getAsObject();
+    stmt.free();
+    return {
+      oldest: (row.oldest as string) || null,
+      newest: (row.newest as string) || null,
+    };
+  }
+  stmt.free();
+  return { oldest: null, newest: null };
+}
+
 export function getCommitsByBranch(appId: string, branchName: string): CommitRow[] {
   const db = getDatabase();
   const stmt = db.prepare(

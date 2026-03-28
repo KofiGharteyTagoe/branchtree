@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import { validateAppId } from '../middleware/validateParams.js';
+import { authorizeAppOwner } from '../middleware/auth.js';
 import * as mergeEventModel from '../models/mergeEvent.model.js';
 
 export const mergesRouter = Router();
 
 // GET /api/apps/:appId/merge-events — All detected merge events
-mergesRouter.get('/apps/:appId/merge-events', validateAppId, (req, res) => {
+mergesRouter.get('/apps/:appId/merge-events', validateAppId, authorizeAppOwner, (req, res) => {
   const events = mergeEventModel.getMergeEvents(req.params.appId);
 
   res.json({

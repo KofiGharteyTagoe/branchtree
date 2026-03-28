@@ -27,13 +27,13 @@ export default {
           200: '#E2E8F0',
           300: '#CBD5E1',
         },
-        // Soft branch colors
+        // Soft branch colors (deeper, more saturated)
         branch: {
-          main: '#6366F1',
-          feature: '#10B981',
-          release: '#F59E0B',
-          hotfix: '#EF4444',
-          development: '#8B5CF6',
+          main: '#4F46E5',
+          feature: '#059669',
+          release: '#D97706',
+          hotfix: '#DC2626',
+          development: '#7C3AED',
           unknown: '#6B7280',
         },
         // Soft accent backgrounds for branch badges

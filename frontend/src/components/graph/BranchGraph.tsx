@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import type { GraphData } from '../../types/graph.types';
 import type { Commit, Branch } from '../../types/app.types';
 import GraphControls from './GraphControls';
@@ -11,12 +11,12 @@ interface BranchGraphProps {
 }
 
 const BRANCH_COLORS: Record<string, string> = {
-  main: '#6366F1',
-  feature: '#10B981',
-  release: '#F59E0B',
-  hotfix: '#EF4444',
-  development: '#8B5CF6',
-  unknown: '#94A3B8',
+  main: '#4F46E5',
+  feature: '#059669',
+  release: '#D97706',
+  hotfix: '#DC2626',
+  development: '#7C3AED',
+  unknown: '#6B7280',
 };
 
 const BRANCH_COLORS_LIGHT: Record<string, string> = {
@@ -28,13 +28,13 @@ const BRANCH_COLORS_LIGHT: Record<string, string> = {
   unknown: '#F8FAFC',
 };
 
-const LANE_WIDTH = 40;
-const COMMIT_SPACING = 50;
-const PADDING_TOP = 80;
-const PADDING_LEFT = 70;
+const LANE_WIDTH = 56;
+const COMMIT_SPACING = 60;
+const PADDING_TOP = 90;
+const PADDING_LEFT = 90;
 const PADDING_BOTTOM = 40;
-const DOT_RADIUS = 6;
-const LABEL_AREA_RIGHT = 280;
+const DOT_RADIUS = 8;
+const LABEL_AREA_RIGHT = 340;
 
 export default function BranchGraph({ data, onCommitClick, onBranchClick }: BranchGraphProps) {
   const [zoom, setZoom] = useState(1);
@@ -98,6 +98,42 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
     return positions;
   }, [sortedCommits, branchLanes, data.branches]);
 
+  // Precompute ancestry sets for lineage highlighting
+  const ancestrySets = useMemo(() => {
+    const sets = new Map<string, Set<string>>();
+    const posMap = new Map<string, number>();
+    sortedCommits.forEach((c, i) => posMap.set(c.hash, i));
+
+    for (const commit of sortedCommits) {
+      const ancestors = new Set<string>();
+      const queue = [commit.hash];
+      while (queue.length > 0) {
+        const current = queue.pop()!;
+        if (ancestors.has(current)) continue;
+        ancestors.add(current);
+        const idx = posMap.get(current);
+        if (idx === undefined) continue;
+        const c = sortedCommits[idx];
+        if (c) {
+          for (const ph of c.parentHashes) {
+            if (!ancestors.has(ph)) queue.push(ph);
+          }
+        }
+      }
+      sets.set(commit.hash, ancestors);
+    }
+    return sets;
+  }, [sortedCommits]);
+
+  const isInAncestry = useCallback(
+    (commitHash: string): boolean => {
+      if (!hoveredCommit) return true;
+      const ancestors = ancestrySets.get(hoveredCommit);
+      return ancestors?.has(commitHash) ?? false;
+    },
+    [hoveredCommit, ancestrySets]
+  );
+
   const svgWidth = PADDING_LEFT + data.branches.length * LANE_WIDTH + LABEL_AREA_RIGHT;
   const svgHeight = PADDING_TOP + sortedCommits.length * COMMIT_SPACING + PADDING_BOTTOM;
 
@@ -109,6 +145,10 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
     const midY = (y1 + y2) / 2;
     return `M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`;
   };
+
+  // Tooltip data for hovered commit
+  const tooltipCommit = hoveredCommit ? sortedCommits.find((c) => c.hash === hoveredCommit) : null;
+  const tooltipPos = hoveredCommit ? commitPositions.get(hoveredCommit) : null;
 
   return (
     <div className="space-y-4">
@@ -136,7 +176,7 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
             </filter>
             {/* Glow for hovered nodes */}
             <filter id="nodeGlow" x="-100%" y="-100%" width="300%" height="300%">
-              <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#6366F1" floodOpacity="0.3" />
+              <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#4F46E5" floodOpacity="0.3" />
             </filter>
           </defs>
 
@@ -145,6 +185,7 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
             const lane = branchLanes.get(branch.name) ?? 0;
             const x = PADDING_LEFT + lane * LANE_WIDTH;
             const color = BRANCH_COLORS_LIGHT[branch.type || 'unknown'] || BRANCH_COLORS_LIGHT.unknown;
+            const isMain = branch.type === 'main';
 
             return (
               <rect
@@ -155,7 +196,7 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
                 height={svgHeight - PADDING_TOP - PADDING_BOTTOM + 40}
                 fill={color}
                 rx={8}
-                opacity={0.6}
+                opacity={isMain ? 0.85 : 0.6}
               />
             );
           })}
@@ -165,6 +206,10 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
             const lane = branchLanes.get(branch.name) ?? 0;
             const x = PADDING_LEFT + lane * LANE_WIDTH;
             const color = BRANCH_COLORS[branch.type || 'unknown'] || BRANCH_COLORS.unknown;
+            const displayName = branch.name.length > 16
+              ? branch.name.substring(0, 15) + '..'
+              : branch.name;
+            const pillWidth = Math.max(60, Math.min(120, displayName.length * 7.5 + 16));
 
             return (
               <g
@@ -174,26 +219,27 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
               >
                 {/* Pill background */}
                 <rect
-                  x={x - 18}
-                  y={12}
-                  width={36}
-                  height={20}
-                  rx={10}
+                  x={x - pillWidth / 2}
+                  y={10}
+                  width={pillWidth}
+                  height={24}
+                  rx={12}
                   fill={color}
                   opacity={0.12}
                 />
                 <text
                   x={x}
-                  y={26}
-                  fontSize={8}
+                  y={27}
+                  fontSize={12}
                   fill={color}
                   textAnchor="middle"
                   fontWeight="700"
                   fontFamily="Inter, system-ui, sans-serif"
                   className="select-none"
                 >
-                  {branch.name.length > 8 ? branch.name.substring(0, 7) + '..' : branch.name}
+                  {displayName}
                 </text>
+                <title>{branch.name}</title>
               </g>
             );
           })}
@@ -209,7 +255,12 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
                 parentHash !== commit.parentHashes[0];
 
               const branchType = to.branch?.type || 'unknown';
-              const edgeColor = isMergeLine ? '#F59E0B' : (BRANCH_COLORS[branchType] || '#94A3B8');
+              const isMain = branchType === 'main';
+              const edgeColor = isMergeLine ? '#D97706' : (BRANCH_COLORS[branchType] || '#6B7280');
+
+              // Lineage dimming
+              const inAncestry = isInAncestry(commit.hash) && isInAncestry(parentHash);
+              const dimmed = hoveredCommit && !inAncestry;
 
               return (
                 <path
@@ -217,10 +268,11 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
                   d={edgePath(from.x, from.y, to.x, to.y)}
                   fill="none"
                   stroke={edgeColor}
-                  strokeWidth={isMergeLine ? 2 : 2}
-                  strokeOpacity={isMergeLine ? 0.5 : 0.35}
-                  strokeDasharray={isMergeLine ? '6,4' : undefined}
+                  strokeWidth={isMergeLine ? 2.5 : (isMain ? 3.5 : 2.5)}
+                  strokeOpacity={dimmed ? 0.08 : (isMergeLine ? 0.6 : (isMain ? 0.7 : 0.5))}
+                  strokeDasharray={isMergeLine ? '8,5' : undefined}
                   strokeLinecap="round"
+                  style={{ transition: 'stroke-opacity 0.2s' }}
                 />
               );
             })
@@ -235,7 +287,11 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
             const color = BRANCH_COLORS[branchType] || BRANCH_COLORS.unknown;
             const isHovered = hoveredCommit === commit.hash;
             const isMerge = commit.isMergeCommit;
-            const radius = isMerge ? DOT_RADIUS + 2 : DOT_RADIUS;
+            const radius = isMerge ? DOT_RADIUS + 3 : DOT_RADIUS;
+
+            // Lineage dimming
+            const inAncestry = isInAncestry(commit.hash);
+            const dimmed = hoveredCommit && !inAncestry;
 
             return (
               <g
@@ -244,6 +300,8 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
                 onClick={() => onCommitClick?.(commit)}
                 onMouseEnter={() => setHoveredCommit(commit.hash)}
                 onMouseLeave={() => setHoveredCommit(null)}
+                opacity={dimmed ? 0.12 : 1}
+                style={{ transition: 'opacity 0.2s' }}
               >
                 {/* Outer glow ring on hover */}
                 {isHovered && (
@@ -252,7 +310,7 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
                     cy={pos.y}
                     r={radius + 6}
                     fill={color}
-                    opacity={0.12}
+                    opacity={0.15}
                   />
                 )}
 
@@ -261,10 +319,10 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
                   cx={pos.x}
                   cy={pos.y}
                   r={radius}
-                  fill={isMerge ? '#F59E0B' : color}
+                  fill={isMerge ? '#D97706' : color}
                   stroke="white"
-                  strokeWidth={2.5}
-                  filter="url(#nodeShadow)"
+                  strokeWidth={3}
+                  filter={isHovered ? 'url(#nodeGlow)' : 'url(#nodeShadow)'}
                   style={{ transition: 'r 0.15s ease-out' }}
                 />
 
@@ -273,32 +331,32 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
                   <circle
                     cx={pos.x}
                     cy={pos.y}
-                    r={2.5}
+                    r={3}
                     fill="white"
                   />
                 )}
 
                 {/* Commit message label */}
                 <text
-                  x={pos.x + 18}
-                  y={pos.y - 4}
-                  fontSize={11}
-                  fill={isHovered ? '#1E293B' : '#94A3B8'}
+                  x={pos.x + 20}
+                  y={pos.y - 5}
+                  fontSize={13}
+                  fill={isHovered ? '#1E293B' : '#64748B'}
                   fontWeight={isHovered ? '600' : '400'}
                   fontFamily="Inter, system-ui, sans-serif"
                   className="select-none"
                   style={{ transition: 'fill 0.15s, font-weight 0.15s' }}
                 >
-                  {commit.message?.substring(0, 45)}
-                  {(commit.message?.length || 0) > 45 ? '...' : ''}
+                  {commit.message?.substring(0, 50)}
+                  {(commit.message?.length || 0) > 50 ? '...' : ''}
                 </text>
 
                 {/* Metadata line */}
                 <text
-                  x={pos.x + 18}
-                  y={pos.y + 10}
-                  fontSize={9}
-                  fill={isHovered ? '#64748B' : '#CBD5E1'}
+                  x={pos.x + 20}
+                  y={pos.y + 11}
+                  fontSize={11}
+                  fill={isHovered ? '#475569' : '#94A3B8'}
                   fontFamily="'SF Mono', 'Fira Code', monospace"
                   className="select-none"
                   style={{ transition: 'fill 0.15s' }}
@@ -310,6 +368,52 @@ export default function BranchGraph({ data, onCommitClick, onBranchClick }: Bran
               </g>
             );
           })}
+
+          {/* Hover tooltip */}
+          {tooltipCommit && tooltipPos && (
+            <foreignObject
+              x={tooltipPos.x + 24}
+              y={tooltipPos.y - 60}
+              width={320}
+              height={140}
+              style={{ pointerEvents: 'none' }}
+            >
+              <div
+                className="bg-gray-900 text-white rounded-xl shadow-elevated p-3 text-xs"
+                style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
+              >
+                <p className="font-semibold text-sm mb-1.5 leading-snug">
+                  {tooltipCommit.message || 'No message'}
+                </p>
+                <div className="space-y-1 text-gray-300">
+                  <p>
+                    <span className="text-gray-500">Author:</span>{' '}
+                    {tooltipCommit.authorName || 'Unknown'}
+                    {tooltipCommit.authorEmail ? ` <${tooltipCommit.authorEmail}>` : ''}
+                  </p>
+                  <p>
+                    <span className="text-gray-500">Date:</span>{' '}
+                    {tooltipCommit.date
+                      ? new Date(tooltipCommit.date).toLocaleString()
+                      : 'Unknown'}
+                  </p>
+                  <p>
+                    <span className="text-gray-500">Hash:</span>{' '}
+                    <span className="font-mono">{tooltipCommit.hash.substring(0, 12)}</span>
+                  </p>
+                  {tooltipCommit.isMergeCommit && (
+                    <p className="text-amber-400 font-medium">Merge commit</p>
+                  )}
+                  {tooltipPos.branch && (
+                    <p>
+                      <span className="text-gray-500">Branch:</span>{' '}
+                      {tooltipPos.branch.name}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </foreignObject>
+          )}
         </svg>
       </div>
 

@@ -1,10 +1,12 @@
 import { apiClient } from '../config/api';
 import type { ProviderType } from '../types/app.types';
+import type { GraphQueryOptions } from '../types/graph.types';
 import type {
   AppsResponse,
   BranchesResponse,
   BranchDetailResponse,
   GraphResponse,
+  GraphSummaryResponse,
   MergeEventsResponse,
   SyncResponse,
 } from '../types/api.types';
@@ -48,8 +50,20 @@ export async function getBranchDetail(
   return res.data;
 }
 
-export async function getGraph(appId: string): Promise<GraphResponse> {
-  const res = await apiClient.get<GraphResponse>(`/apps/${appId}/graph`);
+export async function getGraph(appId: string, options?: GraphQueryOptions): Promise<GraphResponse> {
+  const params = new URLSearchParams();
+  if (options?.since) params.set('since', options.since);
+  if (options?.until) params.set('until', options.until);
+  if (options?.limit) params.set('limit', String(options.limit));
+  if (options?.activeSince) params.set('activeSince', String(options.activeSince));
+  const query = params.toString();
+  const url = `/apps/${appId}/graph${query ? `?${query}` : ''}`;
+  const res = await apiClient.get<GraphResponse>(url);
+  return res.data;
+}
+
+export async function getGraphSummary(appId: string): Promise<GraphSummaryResponse> {
+  const res = await apiClient.get<GraphSummaryResponse>(`/apps/${appId}/graph/summary`);
   return res.data;
 }
 

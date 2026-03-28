@@ -17,6 +17,19 @@ export interface BranchDetailResponse {
 
 export interface GraphResponse extends GraphData {}
 
+export interface GraphSummaryResponse {
+  totalCommits: number;
+  oldestDate: string | null;
+  newestDate: string | null;
+  branchCount: number;
+  branches: Array<{
+    name: string;
+    type: string | null;
+    latestCommitDate: string | null;
+    isStale: boolean;
+  }>;
+}
+
 export interface MergeEventsResponse {
   mergeEvents: MergeEvent[];
 }
