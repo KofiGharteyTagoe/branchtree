@@ -22,7 +22,7 @@ export default {
         },
         // Surface / background
         surface: {
-          50: '#F8FAFC',
+          50: '#DCDEE1',
           100: '#F1F5F9',
           200: '#E2E8F0',
           300: '#CBD5E1',

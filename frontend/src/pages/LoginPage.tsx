@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Navigate, useSearchParams } from 'react-router-dom';
 import { GitBranch, Shield, Users } from 'lucide-react';
+import BranchCanopyBackground from '../components/layout/BranchCanopyBackground';
 
 interface ProvidersResponse {
   providers: Array<'google' | 'microsoft'>;
@@ -46,6 +47,7 @@ export default function LoginPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-surface-50">
+        <BranchCanopyBackground />
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600" />
       </div>
     );
@@ -88,7 +90,8 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-surface-50">
-      <div className="w-full max-w-md mx-4">
+      <BranchCanopyBackground />
+      <div className="w-full max-w-md mx-4 relative z-10">
         <div className="bg-white rounded-2xl shadow-card p-8">
           {/* Logo */}
           <div className="text-center mb-8">
